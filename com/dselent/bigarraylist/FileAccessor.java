@@ -313,6 +313,9 @@ public class FileAccessor
 	{
 		String filePath = memoryFilePath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
 
+		File tempFile = new File(filePath);
+		tempFile.deleteOnExit();
+		
 		FileOutputStream fileOutputStream = new FileOutputStream(filePath);
 		BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream, BUFFER_SIZE);
 
