@@ -1,0 +1,10 @@
+
+//live object exceptions - implement a clear method so this is okay
+//LOAD EXISTING MEMORY?? do this or not?
+//THEN DELETE
+//THEN ADD IN THE MIDDLE OF LIST
+//sort?
+
+
+//not extending arraylist because it is not fully implemented and cannot implement all functions such as toArray
+//also not implementing list interface for the same reasons

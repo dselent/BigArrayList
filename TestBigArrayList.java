@@ -1,6 +1,5 @@
 
 import java.io.File;
-import java.util.GregorianCalendar;
 import java.util.Random;
 
 import com.dselent.bigarraylist.BigArrayList;
@@ -9,7 +8,7 @@ public class TestBigArrayList
 {
 
 
-	public void test(long testSize, int cacheSize, int cacheBlocks)
+	public void test(long testSize, int cacheSize, int cacheBlocks, int ioTypeInt) throws Exception
 	{
 		//ADD
 
@@ -20,10 +19,10 @@ public class TestBigArrayList
 		long TEST_SIZE = testSize;
 		long cacheSizeLong = cacheSize;
 		long cacheBlocksLong = cacheBlocks;
-		long GET_SIZE_ORDERED = cacheSizeLong * 10;
-		long SET_SIZE_ORDERED = cacheSizeLong * 10;
-		int GET_SIZE_RANDOM = 10;
-		int SET_SIZE_RANDOM = 10;
+		long GET_SIZE_ORDERED = cacheSizeLong * 1000;
+		long SET_SIZE_ORDERED = cacheSizeLong * 1000;
+		int GET_SIZE_RANDOM = 1000;
+		int SET_SIZE_RANDOM = 1000;
 
 		if(GET_SIZE_ORDERED >= TEST_SIZE)
 		{
@@ -35,19 +34,42 @@ public class TestBigArrayList
 			SET_SIZE_ORDERED = TEST_SIZE;
 		}
 
+		BigArrayList.IOTypes ioType;
 
-		BigArrayList<Long> arrayList = new BigArrayList<Long>(MEMORY_PATH, CACHE_SIZE, CACHE_BLOCKS);
+		if(ioTypeInt == 1)
+		{
+			ioType = BigArrayList.IOTypes.OBJECT;
+		}
+		else if(ioTypeInt == 2)
+		{
+			ioType = BigArrayList.IOTypes.MMAP_OBJECT;
+		}
+		else if(ioTypeInt == 3)
+		{
+			ioType = BigArrayList.IOTypes.FST_OBJECT;
+		}
+		else if(ioTypeInt == 4)
+		{
+			ioType = BigArrayList.IOTypes.MMAP_FST_OBJECT;
+		}
+		else
+		{
+			ioType = BigArrayList.IOTypes.OBJECT;
+		}
 
-		GregorianCalendar c1 = new GregorianCalendar();
+
+		BigArrayList<Long> arrayList = new BigArrayList<Long>(MEMORY_PATH, CACHE_SIZE, CACHE_BLOCKS, ioType);
+
+		long start1 = System.currentTimeMillis();
 
 		for(long i=0; i<TEST_SIZE; i++)
 		{
 			arrayList.add(i);
 		}
 
-		GregorianCalendar c2 = new GregorianCalendar();
+		long end1 = System.currentTimeMillis();
 
-		double totalTime = c2.getTimeInMillis() - c1.getTimeInMillis();
+		long totalTime = end1 - start1;
 
 		System.out.println("Total ADD time (ms) = " + totalTime);
 
@@ -58,6 +80,7 @@ public class TestBigArrayList
     		long freeMemory = runtime.freeMemory();
 
 		System.out.println("Memory used (bytes) = " + (totalMemory - freeMemory));
+
 
 		if(TEST_SIZE > cacheBlocksLong * cacheSizeLong)
 		{
@@ -71,12 +94,12 @@ public class TestBigArrayList
 			arrayList.flushMemory();
 		}
 
-
+		/*
 		//////////////////////////////////////////////////////////////////////////////////
 
 		//GET ORDERED
 
-		GregorianCalendar c3 = new GregorianCalendar();
+		long start2 = System.currentTimeMillis();
 
 		for(long i=0; i<GET_SIZE_ORDERED; i++)
 		{
@@ -84,9 +107,9 @@ public class TestBigArrayList
 		}
 
 
-		GregorianCalendar c4 = new GregorianCalendar();
+		long end2 = System.currentTimeMillis();
 
-		double totalTime1 = c4.getTimeInMillis() - c3.getTimeInMillis();
+		long totalTime1 = end2 - start2;
 
 		System.out.println("Total GET ORDERED time (ms) = " + totalTime1);
 
@@ -115,7 +138,7 @@ public class TestBigArrayList
 			}
 		}
 
-		GregorianCalendar c5 = new GregorianCalendar();
+		long start3 = System.currentTimeMillis();
 
 		for(int i=0; i<GET_SIZE_RANDOM; i++)
 		{
@@ -123,9 +146,9 @@ public class TestBigArrayList
 		}
 
 
-		GregorianCalendar c6 = new GregorianCalendar();
+		long end3 = System.currentTimeMillis();
 
-		double totalTime2 = c6.getTimeInMillis() - c5.getTimeInMillis();
+		long totalTime2 = end3 - start3;
 
 		System.out.println("Total GET RANDOM time (ms) = " + totalTime2);
 
@@ -139,7 +162,7 @@ public class TestBigArrayList
 
 		//SET ORDERED
 
-		GregorianCalendar c7 = new GregorianCalendar();
+		long start4 = System.currentTimeMillis();
 
 		for(long i=0; i<SET_SIZE_ORDERED; i++)
 		{
@@ -147,9 +170,9 @@ public class TestBigArrayList
 		}
 
 
-		GregorianCalendar c8 = new GregorianCalendar();
+		long end4 = System.currentTimeMillis();
 
-		double totalTime3 = c8.getTimeInMillis() - c7.getTimeInMillis();
+		long totalTime3 = end4 - start4;
 
 		System.out.println("Total SET ORDERED time (ms) = " + totalTime3);
 
@@ -177,7 +200,7 @@ public class TestBigArrayList
 			}
 		}
 
-		GregorianCalendar c9 = new GregorianCalendar();
+		long start5 = System.currentTimeMillis();
 
 		for(int i=0; i<SET_SIZE_RANDOM; i++)
 		{
@@ -185,15 +208,16 @@ public class TestBigArrayList
 		}
 
 
-		GregorianCalendar c10 = new GregorianCalendar();
+		long end5 = System.currentTimeMillis();
 
-		double totalTime4 = c10.getTimeInMillis() - c9.getTimeInMillis();
+		long totalTime4 = end5 - start5;
 
 		System.out.println("Total SET RANDOM time (ms) = " + totalTime4);
 
 		//////////////////////////////////////////////////////////////////////////////
 
-
+		
+		*/
 		arrayList.clearMemory();
 	}
 
@@ -222,13 +246,13 @@ public class TestBigArrayList
 	}
 
 
-	public static void main(String args[])
+	public static void main(String args[]) throws Exception
 	{
 		TestBigArrayList t = new TestBigArrayList();
 
-		System.out.println(args[0] + "_" + args[1] + "_" + args[2] + "_" + args[3]);
-		t.test(Long.parseLong(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+		
+		System.out.println(args[0] + "_" + args[1] + "_" + args[2] + "_" + args[3] + "_" + args[4]);
+		t.test(Long.parseLong(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]));
 		System.out.println("\n\n");
-
 	}
 }

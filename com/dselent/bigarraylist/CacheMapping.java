@@ -19,6 +19,8 @@
 
 package com.dselent.bigarraylist;
 
+import java.io.IOException;
+
 
 /**
  * Class that manages the mapping from files on disk to elements in memory for the BigArrayList class.
@@ -26,55 +28,49 @@ package com.dselent.bigarraylist;
  * 
  * @author Douglas Selent
  *
+ * @param <E> Generic type
  */
-public class CacheMapping
+class CacheMapping<E>
 {
-	//should test defaults
-
-	//must be less than Integer.MAX_Value
 	/**
 	 * Default size of cache block = 1,000,000
 	 */
-	private final int DEFAULT_BLOCK_SIZE = 1000000;
+	private static final int DEFAULT_BLOCK_SIZE = 1000000;
 	
 	/**
 	 * Default number of cache blocks = 2
 	 */
-	private final int DEFAULT_CACHE_BLOCKS = 2;
+	private static final int DEFAULT_CACHE_BLOCKS = 2;
 
 	/**
-	 * The minimum size of a cache block = 10 elements
+	 * The minimum size of a cache block = 5 elements
 	 */
-	private final int MIN_TABLE_SIZE = 10;
+	private static final int MIN_CACHE_SIZE = 5;
 	
 	/**
 	 * The maximum size of a cache block = the integer limit of 2^31 - 1
 	 */
-	private final int MAX_TABLE_SIZE = Integer.MAX_VALUE;
+	private static final int MAX_CACHE_SIZE = Integer.MAX_VALUE;
 
 	/**
 	 * The minimum number of cache blocks = 2
 	 */
-	private final int MIN_CACHE_BLOCKS = 2;
+	private static final int MIN_CACHE_BLOCKS = 2;
 	
 	/**
 	 * The maximum number of cache blocks = the integer limit of 2^31 - 1
 	 */
-	private final int MAX_CACHE_BLOCKS = Integer.MAX_VALUE;
+	private static final int MAX_CACHE_BLOCKS = Integer.MAX_VALUE;
 
 	/**
 	 * The size of the cache blocks
 	 */
-	private int blockize;
+	private int blockSize;
 	
 	/**
 	 * The number of cache blocks
 	 */
 	private int cacheBlocks;
-
-	//stores the actual list number that the current block / element maps to
-	//may not be needed?
-	//private long[][] cacheTable;
 
 	/**
 	 * Array storing the next spot to add to for each cache
@@ -104,20 +100,21 @@ public class CacheMapping
 	/**
 	 * Reference to the associated BigArrayList object
 	 */
-	private BigArrayList<?> bigArrayList;
+	private BigArrayList<E> bigArrayList;
 	
 	/**
-	 * Referene to the accociated FileAccessor object
+	 * Reference to the associated FileAccessor object
 	 */
-	private FileAccessor fileAccessor;
+	private FileAccessor<E> fileAccessor;
 
 	/**
 	 * Constructs a CacheMapping object for the BigArrayList
+	 * 
 	 * @param theList Associated BigArrayList
 	 */
-	protected CacheMapping(BigArrayList<?> theList)
+	protected CacheMapping(BigArrayList<E> theList)
 	{
-		blockize = DEFAULT_BLOCK_SIZE;
+		blockSize = DEFAULT_BLOCK_SIZE;
 		cacheBlocks = DEFAULT_CACHE_BLOCKS;
 
 		cacheTableSpots = new int[cacheBlocks];
@@ -134,7 +131,7 @@ public class CacheMapping
 		}
 
 		bigArrayList = theList;
-		fileAccessor = new FileAccessor();
+		fileAccessor = new FileAccessor<E>();
 	}
 
 	/**
@@ -144,26 +141,20 @@ public class CacheMapping
 	 * @param newCacheBlocks Number of cache blocks
 	 * @param theList Associated BigArrayList
 	 */
-	protected CacheMapping(int newBlockSize, int newCacheBlocks, BigArrayList<?> theList)
+	protected CacheMapping(int blockSize, int cacheBlocks, BigArrayList<E> theList)
 	{
-		if(newBlockSize < MIN_TABLE_SIZE || newBlockSize > MAX_TABLE_SIZE)
+		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
 		{
-			throw new IndexOutOfBoundsException("Table size is " + newBlockSize + " but must be <= " + MAX_TABLE_SIZE + " and >= " + MIN_TABLE_SIZE);
-		}
-		else
-		{
-			blockize = newBlockSize;
+			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
 		}
 
-		if(newCacheBlocks < MIN_CACHE_BLOCKS || newCacheBlocks > MAX_CACHE_BLOCKS)
+		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
 		{
-			throw new IndexOutOfBoundsException("Number of cache blocks is " + newCacheBlocks +  " but must be <= " + MAX_CACHE_BLOCKS + " and >= " + MIN_CACHE_BLOCKS);
+			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
 		}
-		else
-		{
-			cacheBlocks = newCacheBlocks;
-		}
-		
+	
+		this.blockSize = blockSize;
+		this.cacheBlocks = cacheBlocks;
 		cacheTableSpots = new int[cacheBlocks];
 		cacheTableFiles = new int[cacheBlocks];
 		mostRecentlyUsedList = new int[cacheBlocks];
@@ -178,7 +169,7 @@ public class CacheMapping
 		}
 		
 		bigArrayList = theList;
-		fileAccessor = new FileAccessor();
+		fileAccessor = new FileAccessor<E>();
 	}
 
 	/**
@@ -187,9 +178,9 @@ public class CacheMapping
 	 * @param memoryFilePath Folder path to where the data should be written
 	 * @param theList Associated BigArrayList
 	 */
-	protected CacheMapping(String memoryFilePath, BigArrayList<?> theList)
+	protected CacheMapping(String memoryFilePath, BigArrayList<E> theList)
 	{
-		blockize = DEFAULT_BLOCK_SIZE;
+		blockSize = DEFAULT_BLOCK_SIZE;
 		cacheBlocks = DEFAULT_CACHE_BLOCKS;
 
 		cacheTableSpots = new int[cacheBlocks];
@@ -206,7 +197,7 @@ public class CacheMapping
 		}
 
 		bigArrayList = theList;
-		fileAccessor = new FileAccessor(memoryFilePath);
+		fileAccessor = new FileAccessor<E>(memoryFilePath);
 	}
 
 	/**
@@ -214,29 +205,23 @@ public class CacheMapping
 	 * 
 	 * @param newBlockSize Size of each cache block
 	 * @param newCacheBlocks Number of cache blocks
-	 * @param memoryFilePath Folder path to where the data should be written
+	 * @param memoryPath Folder path to where the data should be written
 	 * @param theList Associated BigArrayList
 	 */
-	protected CacheMapping(int newBlockSize, int newCacheBlocks, String memoryFilePath, BigArrayList<?> theList)
+	protected CacheMapping(int blockSize, int cacheBlocks, String memoryPath, BigArrayList<E> theList)
 	{
-		if(newBlockSize < MIN_TABLE_SIZE || newBlockSize > MAX_TABLE_SIZE)
+		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
 		{
-			throw new IndexOutOfBoundsException("Table size is " + newBlockSize + " but must be <= " + MAX_TABLE_SIZE + " and >= " + MIN_TABLE_SIZE);
-		}
-		else
-		{
-			blockize = newBlockSize;
+			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
 		}
 
-		if(newCacheBlocks < MIN_CACHE_BLOCKS || newCacheBlocks > MAX_CACHE_BLOCKS)
+		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
 		{
-			throw new IndexOutOfBoundsException("Number of cache blocks is " + newCacheBlocks +  " but must be <= " + MAX_CACHE_BLOCKS + " and >= " + MIN_CACHE_BLOCKS);
-		}
-		else
-		{
-			cacheBlocks = newCacheBlocks;
+			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
 		}
 		
+		this.blockSize = blockSize;
+		this.cacheBlocks = cacheBlocks;
 		cacheTableSpots = new int[cacheBlocks];
 		cacheTableFiles = new int[cacheBlocks];
 		mostRecentlyUsedList = new int[cacheBlocks];
@@ -251,7 +236,7 @@ public class CacheMapping
 		}
 
 		bigArrayList = theList;
-		fileAccessor = new FileAccessor(memoryFilePath);
+		fileAccessor = new FileAccessor<E>(memoryPath);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -261,15 +246,44 @@ public class CacheMapping
 	 */
 	protected int getTableSize()
 	{
-		return blockize;
+		return blockSize;
 	}
 
 	/**
 	 * @return Returns the number of cache blocks
 	 */
-	protected int getNumberOfCacheBlocks()
+	protected int getNumberOfBlocks()
 	{
 		return cacheBlocks;
+	}
+	
+	/**
+	 * @return Returns the number of used cache blocks based on the size of the list
+	 */
+	protected int getNumberOfUsedBlocks()
+	{
+		long blockSizeLong = blockSize;
+		long usedBlocks = (long) Math.ceil(bigArrayList.size() * 1.0 / blockSizeLong * 1.0);
+		
+		//safe cast, I really doubt there will ever be over 2^31 - 1 blocks
+		return (int)usedBlocks;
+	}
+	
+	/**
+	 * Returns the minimum of the number of used cache blocks based on the list size or the parameter size
+	 * 
+	 * @param index A virtual size index
+	 * @return The number of used cache blocks
+	 */
+	protected int getNumberOfUsedBlocks(long index)
+	{
+		long blockSizeLong = blockSize;
+		long usedVirtualBlocks = (long) Math.ceil(index * 1.0 / blockSizeLong * 1.0);
+		long usedRealBlocks = getNumberOfUsedBlocks();
+		long usedBlocks = Math.max(usedRealBlocks, usedVirtualBlocks);
+		
+		//safe cast, I really doubt there will ever be over 2^31 - 1 blocks
+		return (int)usedBlocks;
 	}
 
 	/**
@@ -302,7 +316,7 @@ public class CacheMapping
 	{
 		boolean full = false;
 
-		if(cacheTableSpots[block] >= blockize)
+		if(cacheTableSpots[block] >= blockSize)
 		{
 			full = true;
 		}
@@ -321,8 +335,6 @@ public class CacheMapping
 		dirtyBits[blockIndex] = dirty;
 	}
 
-	//this function is called by the add method
-	//not considered adding at a spot not at the end
 	/**
 	 * Called by the add method of BigArrayList
 	 * Updates meta data associated with adding an element
@@ -334,18 +346,45 @@ public class CacheMapping
 		cacheTableSpots[cacheBlockIndex]++;
 		updateUsedList(cacheBlockIndex);
 	}
+	
+	/**
+	 * Called by the remove method of BigArrayList
+	 * Updates meta data associated with removing an element
+	 * 
+	 * @param cacheBlockIndex Index of the cache block
+	 */
+	protected void removeEntry(int cacheBlockIndex)
+	{
+		cacheTableSpots[cacheBlockIndex]--;
+		updateUsedList(cacheBlockIndex);
+	}
 
 	/**
 	 * 
-	 * @param elementNumber The element
-	 * @return Returns the file number where this element would be
+	 * @param index The index of the element
+	 * @return Returns the file number where the element at this index would be
 	 */
-	protected int getCacheFileNumber(long elementNumber)
+	protected int getFileNumber(long index)
 	{
-		long longTableSize = blockize;
-		long longFileNumber = elementNumber / longTableSize;
-		Long longObject = new Long(longFileNumber);
-		return longObject.intValue();
+		long blockSizeLong = blockSize;
+		long longFileNumber = index / blockSizeLong;
+		
+		//safe cast, I really doubt there will ever be over 2^31 - 1 files
+		return (int)longFileNumber;
+	}
+	
+	/**
+	 * Returns the last element index for the given file number
+	 * 
+	 * @param fileNumber Number of the file
+	 * @return Last element index in the file
+	 */
+	protected long getLastIndexInFile(int fileNumber)
+	{
+		long blockSizeLong = blockSize;
+		long fileNumberLong = fileNumber;
+		long index = (blockSizeLong * fileNumberLong) + blockSizeLong - 1;
+		return index;
 	}
 
 	/**
@@ -375,12 +414,13 @@ public class CacheMapping
 	 * @param elementNumber The element index
 	 * @return Returns the spot in cache where this element would be
 	 */
-	protected int getSpotInCache(long elementNumber)
+	protected int getSpotInCache(long index)
 	{
-		long longTableSize = blockize;
-		long spotInFile = elementNumber % longTableSize;
-		Long longObject = new Long(spotInFile);
-		return longObject.intValue();
+		long longTableSize = blockSize;
+		long spotInFile = index % longTableSize;
+		
+		//safe cast, cannot be > 2^31 - 1 elements in an ArrayList
+		return (int)spotInFile;
 	}
 	
 	/**
@@ -396,34 +436,6 @@ public class CacheMapping
 		for(int i=0; i<cacheTableFiles.length && !inCache; i++)
 		{
 			if(cacheTableFiles[i] == fileNumber)
-			{
-				inCache = true;
-			}
-		}
-
-		return inCache;
-	}
-
-	/**
-	 * Returns if the element is in cache or not
-	 * 
-	 * @param elementNumber The element index
-	 * @return Returns true if the element number is in cache and false otherwise
-	 */
-	protected boolean isElementNumberInCache(long elementNumber)
-	{
-		boolean inCache = false;
-
-		int fileNumber = getCacheFileNumber(elementNumber);
-		int blockSpot = getCacheBlockSpot(fileNumber);
-
-		if(isFileInCache(fileNumber))
-		{
-			long longTableSize = blockize;
-			Long longCacheSpot = new Long(elementNumber % longTableSize);
-			int cacheSpot = longCacheSpot.intValue();
-
-			if(cacheTableSpots[blockSpot] < cacheSpot)
 			{
 				inCache = true;
 			}
@@ -452,15 +464,10 @@ public class CacheMapping
 		return firstOpen;
 	}
 
-	
 
-
-	//add new to front of list always
-		//before doing this, shift down
-		//find open starting at index 0
-
-	//block number = fileNumber
 	/**
+	 * Updates the list of most recently used blocks
+	 * 
 	 * @param blockNumber Block/File number that was just used
 	 */
 	protected void updateUsedList(int blockNumber)
@@ -531,7 +538,8 @@ public class CacheMapping
 	}
 
 	/**
-	 * Flushed a single cache block to disk
+	 * Flushes a single cache block to disk
+	 * 
 	 * @param blockIndex The index of the cache block
 	 */
 	private void flushCacheBlock(int blockIndex)
@@ -543,7 +551,27 @@ public class CacheMapping
 		{
 			try
 			{
-				fileAccessor.writeToFile(fileNumber, blockIndex, bigArrayList);
+				if(bigArrayList.getIOType() == BigArrayList.IOTypes.OBJECT)
+				{
+					fileAccessor.writeToFileObject(fileNumber, blockIndex, bigArrayList);
+				}
+				else if(bigArrayList.getIOType() == BigArrayList.IOTypes.MMAP_OBJECT)
+				{
+					fileAccessor.writeToFileMMapObject(fileNumber, blockIndex, bigArrayList);
+				}
+				else if(bigArrayList.getIOType() == BigArrayList.IOTypes.FST_OBJECT)
+				{
+					fileAccessor.writeToFileFSTObject(fileNumber, blockIndex, bigArrayList);
+				}
+				else if(bigArrayList.getIOType() == BigArrayList.IOTypes.MMAP_FST_OBJECT)
+				{
+					fileAccessor.writeToFileMMapFSTObject(fileNumber, blockIndex, bigArrayList);
+				}
+				else
+				{
+					fileAccessor.writeToFileObject(fileNumber, blockIndex, bigArrayList);
+				}
+				
 				setDirtyBit(blockIndex, false);
 			}
 			catch(Exception e)
@@ -576,18 +604,13 @@ public class CacheMapping
 		cacheTableFiles[blockToClear] = -1;
 	}
 
-	//openCacheBlock = spot where file is in cache
-	//blockToFlush = fileNumber in the openCacheBlock spot
-	//return the cache spot of the file = openCacheBlock
 	/**
 	 * Brings the content of the given file number into an available cache block
 	 * 
 	 * @param fileNumber The file number
-	 * @param newBlock Indicated if a new block is being created.  This occurs when adding to the end of the list needs to add to
-	 * a cache block that is not in memory because it hasn't been created yet as opposed to being on disk.
 	 * @return The index of the spot where the cache block was brought into
 	 */
-	protected int bringFileIntoCache(int fileNumber, boolean newBlock)
+	protected int bringFileIntoCache(int fileNumber)
 	{
 		//clear a spot if there isn't one
 
@@ -606,12 +629,7 @@ public class CacheMapping
 
 		openCacheBlock = getFirstOpenCacheBlock();
 
-		//bring into cache without reading from file when new block is being created
-
-		if(!newBlock)
-		{
-			readFromFile(fileNumber, openCacheBlock);
-		}
+		readFromFile(fileNumber, openCacheBlock);
 
 		setCacheTableFiles(openCacheBlock, fileNumber);
 		setCacheTableSpots(openCacheBlock, bigArrayList.getArraySize(openCacheBlock));
@@ -620,18 +638,6 @@ public class CacheMapping
 
 		return openCacheBlock;
 	}
-
-	/*
-	public boolean doesFileExist(int fileNumber)
-	{
-		return customFileAccessor.doesFileExist(fileNumber);
-	}
-
-	public void createFile(int fileNumber)
-	{
-		customFileAccessor.createFile(fileNumber);
-	}
-	*/
 
 	/**
 	 * Reads the data from the given file number / cache block into the specified cache index
@@ -643,7 +649,27 @@ public class CacheMapping
 	{
 		try
 		{
-			fileAccessor.readFromFile(fileNumber, cacheIndex, bigArrayList);
+			if(bigArrayList.getIOType() == BigArrayList.IOTypes.OBJECT)
+			{
+				fileAccessor.readFromFileObject(fileNumber, cacheIndex, bigArrayList);
+			}
+			else if(bigArrayList.getIOType() == BigArrayList.IOTypes.MMAP_OBJECT)
+			{
+				fileAccessor.readFromFileMMapObject(fileNumber, cacheIndex, bigArrayList);
+			}
+			else if(bigArrayList.getIOType() == BigArrayList.IOTypes.FST_OBJECT)
+			{
+				fileAccessor.readFromFileFSTObject(fileNumber, cacheIndex, bigArrayList);
+			}
+			else if(bigArrayList.getIOType() == BigArrayList.IOTypes.MMAP_FST_OBJECT)
+			{
+				fileAccessor.readFromFileMMapFSTObject(fileNumber, cacheIndex, bigArrayList);
+			}
+			else
+			{
+				fileAccessor.readFromFileObject(fileNumber, cacheIndex, bigArrayList);
+			}
+			
 		}
 		catch(Exception e)
 		{
@@ -655,7 +681,7 @@ public class CacheMapping
 	/**
 	 * Deletes all data from disk
 	 */
-	protected void clearMemory()
+	protected void clearMemory() throws IOException
 	{
 		fileAccessor.clearMemory();
 	}

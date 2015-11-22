@@ -1,6 +1,5 @@
 
 import java.util.ArrayList;
-import java.util.GregorianCalendar;
 import java.util.Random;
 
 public class TestArrayList
@@ -11,21 +10,22 @@ public class TestArrayList
 		//ADD
 
 		long TEST_SIZE = testSize;
+		int NUMBER_OF_ITERATIONS = 100;
 
 		ArrayList<Long> arrayList = new ArrayList<Long>();
 
-		GregorianCalendar c1 = new GregorianCalendar();
+		long start1 = System.currentTimeMillis();
 
 		for(long i=0; i<TEST_SIZE; i++)
 		{
 			arrayList.add(i);
 		}
 
-		GregorianCalendar c2 = new GregorianCalendar();
+		long end1 = System.currentTimeMillis();
 
-		double totalTime = c2.getTimeInMillis() - c1.getTimeInMillis();
+		long totalTime1 = end1 - start1;
 
-		System.out.println("Total ADD time (ms) = " + totalTime);
+		System.out.println("Total ADD time (ms) = " + totalTime1);
 
     		Runtime runtime = Runtime.getRuntime();
 
@@ -38,18 +38,21 @@ public class TestArrayList
 
 		//GET ORDERED
 
-		GregorianCalendar c3 = new GregorianCalendar();
+		long start2 = System.currentTimeMillis();
 
-		for(int i=0; i<TEST_SIZE; i++)
+		for(int iterations=0; iterations<NUMBER_OF_ITERATIONS; iterations++)
 		{
-			arrayList.get(i);
+			for(int i=0; i<TEST_SIZE; i++)
+			{
+				arrayList.get(i);
+			}
 		}
 
-		GregorianCalendar c4 = new GregorianCalendar();
+		long end2 = System.currentTimeMillis();
 
-		double totalTime1 = c4.getTimeInMillis() - c3.getTimeInMillis();
+		long totalTime2 = end2 - start2;
 
-		System.out.println("Total GET ORDERED time (ms) = " + totalTime1);
+		System.out.println("Total GET ORDERED time (ms) = " + totalTime2);
 
 
 		///////////////////////////////////////////////////////////////////////////////////
@@ -64,35 +67,41 @@ public class TestArrayList
 			randomElements[i] = r.nextInt((new Long(TEST_SIZE)).intValue());
 		}
 
-		GregorianCalendar c5 = new GregorianCalendar();
+		long start3 = System.currentTimeMillis();
 
-		for(int i=0; i<TEST_SIZE; i++)
+		for(int iterations=0; iterations<NUMBER_OF_ITERATIONS; iterations++)
 		{
-			arrayList.get(randomElements[i]);
+			for(int i=0; i<TEST_SIZE; i++)
+			{
+				arrayList.get(randomElements[i]);
+			}
 		}
 
-		GregorianCalendar c6 = new GregorianCalendar();
+		long end3 = System.currentTimeMillis();
 
-		double totalTime2 = c6.getTimeInMillis() - c5.getTimeInMillis();
+		long totalTime3 = end3 - start3;
 
-		System.out.println("Total GET RANDOM time (ms) = " + totalTime2);
+		System.out.println("Total GET RANDOM time (ms) = " + totalTime3);
 
 		////////////////////////////////////////////////////////////////////////////////
 
 		//SET ORDERED
 
-		GregorianCalendar c7 = new GregorianCalendar();
+		long start4 = System.currentTimeMillis();
 
-		for(int i=0; i<TEST_SIZE; i++)
+		for(int iterations=0; iterations<NUMBER_OF_ITERATIONS; iterations++)
 		{
-			arrayList.set(i, 1l);
+			for(int i=0; i<TEST_SIZE; i++)
+			{
+				arrayList.set(i, 1l);
+			}
 		}
 
-		GregorianCalendar c8 = new GregorianCalendar();
+		long end4 = System.currentTimeMillis();
 
-		double totalTime3 = c8.getTimeInMillis() - c7.getTimeInMillis();
+		long totalTime4 = end4 - start4;
 
-		System.out.println("Total SET ORDERED time (ms) = " + totalTime3);
+		System.out.println("Total SET ORDERED time (ms) = " + totalTime4);
 
 		////////////////////////////////////////////////////////////////////////////////
 
@@ -106,18 +115,21 @@ public class TestArrayList
 			randomElements1[i] = r1.nextInt((new Long(TEST_SIZE)).intValue());
 		}
 
-		GregorianCalendar c9 = new GregorianCalendar();
+		long start5 = System.currentTimeMillis();
 
-		for(int i=0; i<TEST_SIZE; i++)
+		for(int iterations=0; iterations<NUMBER_OF_ITERATIONS; iterations++)
 		{
-			arrayList.set(randomElements1[i], 1l);
+			for(int i=0; i<TEST_SIZE; i++)
+			{
+				arrayList.set(randomElements1[i], 1l);
+			}
 		}
 
-		GregorianCalendar c10 = new GregorianCalendar();
+		long end4 = System.currentTimeMillis();
 
-		double totalTime4 = c10.getTimeInMillis() - c9.getTimeInMillis();
+		long totalTime5 = end5 - start5;
 
-		System.out.println("Total SET RANDOM time (ms) = " + totalTime4);		
+		System.out.println("Total SET RANDOM time (ms) = " + totalTime5);		
 	}
 
 
