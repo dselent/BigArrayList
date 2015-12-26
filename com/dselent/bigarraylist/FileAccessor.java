@@ -504,7 +504,6 @@ class FileAccessor<E>
 	 * @param cacheSpot The block to write to disk
 	 * @param arrayList The BigArrayList
 	 * @throws IOException For I/O errors
-	 * @throws ClassNotFoundException If no such class exists
 	 */
 	protected void writeToFileObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException
 	{
@@ -546,13 +545,12 @@ class FileAccessor<E>
 	/**
 	 * Writes a cache block to disk using memory mapped files with object streams
 	 * <p>
-	 * Will not automatically delete files when the program ends.  Programmer must call {@link com.dselent.bigarraylist.BigArrayList.clearMemory}
+	 * Will not automatically delete files when the program ends.  Programmer must call {@link com.dselent.bigarraylist.BigArrayList#clearMemory}
 	 * 
 	 * @param fileNumber The file number to write to
 	 * @param cacheSpot The block to write to disk
 	 * @param arrayList The BigArrayList
 	 * @throws IOException For I/O errors
-	 * @throws ClassNotFoundException If no such class exists
 	 */
 	//must clean up byte buffer and suggest to garbage collect it or else the files cannot be deleted
 	protected void writeToFileMMapObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException
@@ -606,7 +604,6 @@ class FileAccessor<E>
 	 * @param cacheSpot The block to write to disk
 	 * @param arrayList The BigArrayList
 	 * @throws IOException For I/O errors
-	 * @throws ClassNotFoundException If no such class exists
 	 */
 	protected void writeToFileFSTObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException
 	{
@@ -647,7 +644,7 @@ class FileAccessor<E>
 	/**
 	 * Writes a cache block to disk using memory mapped files with FST object output streams
 	 * <p>
-	 * Will not automatically delete files when the program ends.  Programmer must call {@link com.dselent.bigarraylist.BigArrayList.clearMemory}
+	 * Will not automatically delete files when the program ends.  Programmer must call {@link com.dselent.bigarraylist.BigArrayList#clearMemory}
 	 * 
 	 * @param fileNumber The file number to write to
 	 * @param cacheSpot The block to write to disk

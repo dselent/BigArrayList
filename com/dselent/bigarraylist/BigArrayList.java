@@ -128,7 +128,7 @@ public class BigArrayList<E>
 		for(int i=0; i<numCacheBlocks; i++)
 		{
 			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getTableSize());
+			arrayList.ensureCapacity(cacheMapping.getBlockSize());
 			arrayLists.add(arrayList);
 		}
 
@@ -153,7 +153,7 @@ public class BigArrayList<E>
 		for(int i=0; i<numCacheBlocks; i++)
 		{
 			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getTableSize());
+			arrayList.ensureCapacity(cacheMapping.getBlockSize());
 			arrayLists.add(arrayList);
 		}
 
@@ -179,7 +179,7 @@ public class BigArrayList<E>
 		for(int i=0; i<numCacheBlocks; i++)
 		{
 			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getTableSize());
+			arrayList.ensureCapacity(cacheMapping.getBlockSize());
 			arrayLists.add(arrayList);
 		}
 
@@ -205,7 +205,7 @@ public class BigArrayList<E>
 		for(int i=0; i<numCacheBlocks; i++)
 		{
 			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getTableSize());
+			arrayList.ensureCapacity(cacheMapping.getBlockSize());
 			arrayLists.add(arrayList);
 		}
 
@@ -232,7 +232,7 @@ public class BigArrayList<E>
 		for(int i=0; i<numCacheBlocks; i++)
 		{
 			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getTableSize());
+			arrayList.ensureCapacity(cacheMapping.getBlockSize());
 			arrayLists.add(arrayList);
 		}
 
@@ -260,7 +260,7 @@ public class BigArrayList<E>
 		for(int i=0; i<numCacheBlocks; i++)
 		{
 			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getTableSize());
+			arrayList.ensureCapacity(cacheMapping.getBlockSize());
 			arrayLists.add(arrayList);
 		}
 
@@ -288,7 +288,7 @@ public class BigArrayList<E>
 		for(int i=0; i<numCacheBlocks; i++)
 		{
 			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getTableSize());
+			arrayList.ensureCapacity(cacheMapping.getBlockSize());
 			arrayLists.add(arrayList);
 		}
 
@@ -298,6 +298,31 @@ public class BigArrayList<E>
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * @return Returns the number of blocks in memory at a time
+	 */
+	public long getNumberOfBlocks()
+	{
+		return cacheMapping.getNumberOfBlocks();
+	}
+	
+	/**
+	 * @return Returns the block size
+	 */
+	public long getBlockSize()
+	{
+		
+		return cacheMapping.getBlockSize();
+	}
+	
+	/**
+	 * @return Returns the file location of the memory storage
+	 */
+	public String getFilePath()
+	{
+		return cacheMapping.getFileAccessor().getMemoryFilePath();
+	}
 	
 	/**
 	 * Sets the ArrayList at the given index
@@ -371,6 +396,8 @@ public class BigArrayList<E>
 	/**
 	 * Used to delete the memory file.
 	 * The object should not be used anymore once this method is called
+	 * 
+	 * @throws IOException For I/O error
 	 */
 	public void clearMemory() throws IOException
 	{
@@ -435,7 +462,7 @@ public class BigArrayList<E>
 				List<E> nextCacheBlock = arrayLists.get(nextCacheBlockSpot);
 					
 				//SHOULD FIND MAX SHIFT TOO
-				while(cacheBlock.size() < cacheMapping.getTableSize() && nextFileNumber < usedCacheBlocks)
+				while(cacheBlock.size() < cacheMapping.getBlockSize() && nextFileNumber < usedCacheBlocks)
 				{
 					if(nextCacheBlock.size() > 0)
 					{
@@ -567,7 +594,7 @@ public class BigArrayList<E>
 				List<E> nextCacheBlock = arrayLists.get(nextCacheBlockSpot);
 				
 				//shift down to current block
-				while(cacheBlock.size() < cacheMapping.getTableSize() && !done)
+				while(cacheBlock.size() < cacheMapping.getBlockSize() && !done)
 				{
 					if(nextCacheBlock.size() > 0)
 					{

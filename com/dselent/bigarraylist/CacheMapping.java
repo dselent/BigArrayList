@@ -137,8 +137,8 @@ class CacheMapping<E>
 	/**
 	 * Constructs a CacheMapping object for the BigArrayList with the following parameters
 	 * 
-	 * @param newBlockSize Size of each cache block
-	 * @param newCacheBlocks Number of cache blocks
+	 * @param blockSize Size of each cache block
+	 * @param cacheBlocks Number of cache blocks
 	 * @param theList Associated BigArrayList
 	 */
 	protected CacheMapping(int blockSize, int cacheBlocks, BigArrayList<E> theList)
@@ -203,8 +203,8 @@ class CacheMapping<E>
 	/**
 	 * Constructs a CacheMapping object for the BigArrayList with the following parameters
 	 * 
-	 * @param newBlockSize Size of each cache block
-	 * @param newCacheBlocks Number of cache blocks
+	 * @param blockSize Size of each cache block
+	 * @param cacheBlocks Number of cache blocks
 	 * @param memoryPath Folder path to where the data should be written
 	 * @param theList Associated BigArrayList
 	 */
@@ -242,9 +242,17 @@ class CacheMapping<E>
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
+	 * @return Returns the fileAccessor object
+	 */
+	protected FileAccessor<E> getFileAccessor()
+	{
+		return fileAccessor;
+	}
+	
+	/**
 	 * @return Returns the size of each cache block
 	 */
-	protected int getTableSize()
+	protected int getBlockSize()
 	{
 		return blockSize;
 	}
@@ -411,7 +419,7 @@ class CacheMapping<E>
 	/**
 	 * Returns the spot in cache where this element would be
 	 * 
-	 * @param elementNumber The element index
+	 * @param index The element index
 	 * @return Returns the spot in cache where this element would be
 	 */
 	protected int getSpotInCache(long index)
@@ -680,6 +688,8 @@ class CacheMapping<E>
 
 	/**
 	 * Deletes all data from disk
+	 * 
+	 * @throws IOException If an I/O error occurs
 	 */
 	protected void clearMemory() throws IOException
 	{
