@@ -302,7 +302,7 @@ public class BigArrayList<E>
 	/**
 	 * @return Returns the number of blocks in memory at a time
 	 */
-	public long getNumberOfBlocks()
+	public int getNumberOfBlocks()
 	{
 		return cacheMapping.getNumberOfBlocks();
 	}
@@ -310,7 +310,7 @@ public class BigArrayList<E>
 	/**
 	 * @return Returns the block size
 	 */
-	public long getBlockSize()
+	public int getBlockSize()
 	{
 		
 		return cacheMapping.getBlockSize();
