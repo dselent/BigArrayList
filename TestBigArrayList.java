@@ -58,7 +58,7 @@ public class TestBigArrayList
 		}
 
 
-		BigArrayList<Long> arrayList = new BigArrayList<Long>(MEMORY_PATH, CACHE_SIZE, CACHE_BLOCKS, ioType);
+		BigArrayList<Long> arrayList = new BigArrayList<Long>(CACHE_SIZE, CACHE_BLOCKS, MEMORY_PATH, ioType);
 
 		long start1 = System.currentTimeMillis();
 
@@ -94,7 +94,7 @@ public class TestBigArrayList
 			arrayList.flushMemory();
 		}
 
-		/*
+		
 		//////////////////////////////////////////////////////////////////////////////////
 
 		//GET ORDERED
@@ -217,7 +217,7 @@ public class TestBigArrayList
 		//////////////////////////////////////////////////////////////////////////////
 
 		
-		*/
+		
 		arrayList.clearMemory();
 	}
 

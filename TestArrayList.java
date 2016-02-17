@@ -125,7 +125,7 @@ public class TestArrayList
 			}
 		}
 
-		long end4 = System.currentTimeMillis();
+		long end5 = System.currentTimeMillis();
 
 		long totalTime5 = end5 - start5;
 
