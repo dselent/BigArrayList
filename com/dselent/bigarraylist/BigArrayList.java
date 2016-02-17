@@ -21,6 +21,8 @@ package com.dselent.bigarraylist;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -85,6 +87,46 @@ public class BigArrayList<E>
 	 * Size of the whole list including what is and is not currently in memory
 	 */
 	private long wholeListSize;
+	
+	/**
+	 * Default size of cache block = 1,000,000
+	 */
+	private static final int DEFAULT_BLOCK_SIZE = 1000000;
+	
+	/**
+	 * Default number of cache blocks = 2
+	 */
+	private static final int DEFAULT_CACHE_BLOCKS = 2;
+
+	/**
+	 * The minimum size of a cache block = 5 elements
+	 */
+	private static final int MIN_CACHE_SIZE = 5;
+	
+	/**
+	 * The maximum size of a cache block = the integer limit of 2^31 - 1
+	 */
+	private static final int MAX_CACHE_SIZE = Integer.MAX_VALUE;
+
+	/**
+	 * The minimum number of cache blocks = 2
+	 */
+	private static final int MIN_CACHE_BLOCKS = 2;
+	
+	/**
+	 * The maximum number of cache blocks = the integer limit of 2^31 - 1
+	 */
+	private static final int MAX_CACHE_BLOCKS = Integer.MAX_VALUE;
+
+	/**
+	 * The size of the cache blocks
+	 */
+	private int blockSize;
+	
+	/**
+	 * The number of cache blocks
+	 */
+	private int cacheBlocks;
 
 	//all methods should check this and throw an exception if false
 	/**
@@ -119,16 +161,17 @@ public class BigArrayList<E>
 	 */
 	public BigArrayList()
 	{
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(this);
+		blockSize = DEFAULT_BLOCK_SIZE;
+		cacheBlocks = DEFAULT_CACHE_BLOCKS;
 		
-		int numCacheBlocks = cacheMapping.getNumberOfBlocks();
-		arrayLists = new ArrayList<List<E>>(numCacheBlocks);
+		softMapping = new SoftMapping<E>();
+		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks);
+		
+		arrayLists = new ArrayList<List<E>>();
 
-		for(int i=0; i<numCacheBlocks; i++)
+		for(int i=0; i<cacheBlocks; i++)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getBlockSize());
+			List<E> arrayList = new ArrayList<E>();
 			arrayLists.add(arrayList);
 		}
 
@@ -144,16 +187,17 @@ public class BigArrayList<E>
 	 */
 	public BigArrayList(String memoryPath)
 	{
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(memoryPath, this);
+		blockSize = DEFAULT_BLOCK_SIZE;
+		cacheBlocks = DEFAULT_CACHE_BLOCKS;
 		
-		int numCacheBlocks = cacheMapping.getNumberOfBlocks();
-		arrayLists = new ArrayList<List<E>>(numCacheBlocks);
+		softMapping = new SoftMapping<E>();
+		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks, memoryPath);
+		
+		arrayLists = new ArrayList<List<E>>();
 
-		for(int i=0; i<numCacheBlocks; i++)
+		for(int i=0; i<cacheBlocks; i++)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getBlockSize());
+			List<E> arrayList = new ArrayList<E>();
 			arrayLists.add(arrayList);
 		}
 
@@ -170,16 +214,17 @@ public class BigArrayList<E>
 	 */
 	public BigArrayList(String memoryPath, IOTypes ioType)
 	{
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(memoryPath, this);
+		blockSize = DEFAULT_BLOCK_SIZE;
+		cacheBlocks = DEFAULT_CACHE_BLOCKS;
 		
-		int numCacheBlocks = cacheMapping.getNumberOfBlocks();
-		arrayLists = new ArrayList<List<E>>(numCacheBlocks);
+		softMapping = new SoftMapping<E>();
+		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks, memoryPath);
+		
+		arrayLists = new ArrayList<List<E>>();
 
-		for(int i=0; i<numCacheBlocks; i++)
+		for(int i=0; i<cacheBlocks; i++)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getBlockSize());
+			List<E> arrayList = new ArrayList<E>();
 			arrayLists.add(arrayList);
 		}
 
@@ -192,20 +237,31 @@ public class BigArrayList<E>
 	 * Constructor that specifies the size and number of cache blocks.
 	 * 
 	 * @param blockSize Size of each cache block
-	 * @param numberOfBlocks Number of cache blocks stored in memory at a given time
+	 * @param cacheBlocks Number of cache blocks stored in memory at a given time
 	 */
-	public BigArrayList(int blockSize, int numberOfBlocks)
+	public BigArrayList(int blockSize, int cacheBlocks)
 	{
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(blockSize, numberOfBlocks, this);
-		
-		int numCacheBlocks = cacheMapping.getNumberOfBlocks();
-		arrayLists = new ArrayList<List<E>>(numCacheBlocks);
-
-		for(int i=0; i<numCacheBlocks; i++)
+		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getBlockSize());
+			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
+		}
+
+		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
+		{
+			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
+		}
+	
+		this.blockSize = blockSize;
+		this.cacheBlocks = cacheBlocks;
+		
+		softMapping = new SoftMapping<E>();
+		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks);
+		
+		arrayLists = new ArrayList<List<E>>();
+
+		for(int i=0; i<cacheBlocks; i++)
+		{
+			List<E> arrayList = new ArrayList<E>();
 			arrayLists.add(arrayList);
 		}
 
@@ -218,21 +274,32 @@ public class BigArrayList<E>
 	 * Constructor that specifies the size and number of cache blocks.
 	 * 
 	 * @param blockSize Size of each cache block
-	 * @param numberOfBlocks Number of cache blocks stored in memory at a given time
+	 * @param cacheBlocks Number of cache blocks stored in memory at a given time
 	 * @param ioType The type of IO to use
 	 */
-	public BigArrayList(int blockSize, int numberOfBlocks, IOTypes ioType)
+	public BigArrayList(int blockSize, int cacheBlocks, IOTypes ioType)
 	{
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(blockSize, numberOfBlocks, this);
-		
-		int numCacheBlocks = cacheMapping.getNumberOfBlocks();
-		arrayLists = new ArrayList<List<E>>(numCacheBlocks);
-
-		for(int i=0; i<numCacheBlocks; i++)
+		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getBlockSize());
+			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
+		}
+
+		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
+		{
+			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
+		}
+	
+		this.blockSize = blockSize;
+		this.cacheBlocks = cacheBlocks;
+		
+		softMapping = new SoftMapping<E>();
+		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks);
+		
+		arrayLists = new ArrayList<List<E>>();
+
+		for(int i=0; i<cacheBlocks; i++)
+		{
+			List<E> arrayList = new ArrayList<E>();
 			arrayLists.add(arrayList);
 		}
 
@@ -246,21 +313,32 @@ public class BigArrayList<E>
 	 * Constructor that specifies  the size and number of cache blocks as well as the folder path to write to.
 	 * 
 	 * @param blockSize cacheSize Size of each cache block
-	 * @param numberOfBlocks Number of cache blocks stored in memory at a given time
+	 * @param cacheBlocks Number of cache blocks stored in memory at a given time
 	 * @param memoryPath The folder path to write to
 	 */
-	public BigArrayList(int blockSize, int numberOfBlocks, String memoryPath)
+	public BigArrayList(int blockSize, int cacheBlocks, String memoryPath)
 	{
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(blockSize, numberOfBlocks, memoryPath, this);
-		
-		int numCacheBlocks = cacheMapping.getNumberOfBlocks();
-		arrayLists = new ArrayList<List<E>>(numCacheBlocks);
-
-		for(int i=0; i<numCacheBlocks; i++)
+		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getBlockSize());
+			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
+		}
+
+		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
+		{
+			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
+		}
+	
+		this.blockSize = blockSize;
+		this.cacheBlocks = cacheBlocks;
+		
+		softMapping = new SoftMapping<E>();
+		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks, memoryPath);
+		
+		arrayLists = new ArrayList<List<E>>();
+
+		for(int i=0; i<cacheBlocks; i++)
+		{
+			List<E> arrayList = new ArrayList<E>();
 			arrayLists.add(arrayList);
 		}
 
@@ -273,22 +351,33 @@ public class BigArrayList<E>
 	 * Constructor that specifies  the size and number of cache blocks as well as the folder path to write to.
 	 * 
 	 * @param blockSize cacheSize Size of each cache block
-	 * @param numberOfBlocks Number of cache blocks stored in memory at a given time
+	 * @param cacheBlocks Number of cache blocks stored in memory at a given time
 	 * @param memoryPath The folder path to write to
 	 * @param ioType The type of IO to use
 	 */
-	public BigArrayList(int blockSize, int numberOfBlocks, String memoryPath, IOTypes ioType)
+	public BigArrayList(int blockSize, int cacheBlocks, String memoryPath, IOTypes ioType)
 	{
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(blockSize, numberOfBlocks, memoryPath, this);
-		
-		int numCacheBlocks = cacheMapping.getNumberOfBlocks();
-		arrayLists = new ArrayList<List<E>>(numCacheBlocks);
-
-		for(int i=0; i<numCacheBlocks; i++)
+		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(cacheMapping.getBlockSize());
+			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
+		}
+
+		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
+		{
+			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
+		}
+	
+		this.blockSize = blockSize;
+		this.cacheBlocks = cacheBlocks;
+		
+		softMapping = new SoftMapping<E>();
+		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks, memoryPath);
+		
+		arrayLists = new ArrayList<List<E>>();
+
+		for(int i=0; i<cacheBlocks; i++)
+		{
+			List<E> arrayList = new ArrayList<E>();
 			arrayLists.add(arrayList);
 		}
 
@@ -300,11 +389,19 @@ public class BigArrayList<E>
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	/**
+	 * @return Returns the associated CacheMapping object
+	 */
+	protected CacheMapping<E> getCacheMapping()
+	{
+		return cacheMapping;
+	}
+	
+	/**
 	 * @return Returns the number of blocks in memory at a time
 	 */
 	public int getNumberOfBlocks()
 	{
-		return cacheMapping.getNumberOfBlocks();
+		return cacheBlocks;
 	}
 	
 	/**
@@ -313,8 +410,38 @@ public class BigArrayList<E>
 	public int getBlockSize()
 	{
 		
-		return cacheMapping.getBlockSize();
+		return blockSize;
 	}
+	
+	/**
+	 * @return Returns the number of used cache blocks based on the size of the list
+	 */
+	protected int getNumberOfUsedBlocks()
+	{
+		long blockSizeLong = blockSize;
+		long usedBlocks = (long) Math.ceil(this.size() * 1.0 / blockSizeLong * 1.0);
+		
+		//safe cast, I really doubt there will ever be over 2^31 - 1 blocks
+		return (int)usedBlocks;
+	}
+	
+	/**
+	 * Returns the minimum of the number of used cache blocks based on the list size or the parameter size
+	 * 
+	 * @param index A virtual size index
+	 * @return The number of used cache blocks
+	 */
+	protected int getNumberOfUsedBlocks(long index)
+	{
+		long blockSizeLong = blockSize;
+		long usedVirtualBlocks = (long) Math.ceil(index * 1.0 / blockSizeLong * 1.0);
+		long usedRealBlocks = getNumberOfUsedBlocks();
+		long usedBlocks = Math.max(usedRealBlocks, usedVirtualBlocks);
+		
+		//safe cast, I really doubt there will ever be over 2^31 - 1 blocks
+		return (int)usedBlocks;
+	}
+
 	
 	/**
 	 * @return Returns the file location of the memory storage
@@ -330,7 +457,7 @@ public class BigArrayList<E>
 	 * @param index The index of the ArrayList/Cache block to set
 	 * @param arrayList The new ArrayList/Cache block
 	 */
-	public void setArrayList(int index, ArrayList<E> arrayList)
+	public void setList(int index, List<E> arrayList)
 	{
 		arrayLists.set(index, arrayList);
 	}
@@ -341,7 +468,7 @@ public class BigArrayList<E>
 	 * @param index The index of the ArrayList/Cache block to get
 	 * @return The ArrayList/Cache block
 	 */
-	protected List<E> getArrayList(int index)
+	protected List<E> getList(int index)
 	{
 		return arrayLists.get(index);
 	}
@@ -412,6 +539,261 @@ public class BigArrayList<E>
 	{
 		cacheMapping.flushCache();
 	}
+		
+	/**
+	 * Sorts the BigArrayList.  Note that the usage mimics Collections.sort() except that the sorted list is returned.
+	 * The caller must set their list to equal the return value (similar to String concatenation), ex:  sortedList = BigArrayList.sort(sortedList);
+	 * 
+	 * @param unsortedList The list to be sorted
+	 * @return The list in sorted order
+	 * @throws IOException
+	 */
+	public static<T extends Comparable<? super T>> BigArrayList<T> sort(BigArrayList<T> unsortedList) throws IOException
+	{
+		return sort(unsortedList, Comparator.naturalOrder());
+	}
+	
+	/**
+	 * Sorts the BigArrayList.  Note that the usage mimics Collections.sort() except that the sorted list is returned.
+	 * The caller must set their list to equal the return value (similar to String concatenation), ex:  sortedList = BigArrayList.sort(sortedList);
+	 * 
+	 * @param unsortedList unsortedList The list to be sorted
+	 * @param comparator How to compare the elements in the list
+	 * @return The list in sorted order
+	 * @throws IOException
+	 */
+	public static<T extends Comparable<? super T>> BigArrayList<T> sort(BigArrayList<T> unsortedList, Comparator<? super T> comparator) throws IOException
+	{
+		if(unsortedList.size() <= 1)
+		{
+			return unsortedList;
+		}
+		else
+		{
+			unsortedList.purgeActionBuffer();
+				
+			CacheMapping<T> unsortedCacheMapping = unsortedList.getCacheMapping();
+			int blockSize = unsortedList.getBlockSize();
+			int cacheBlocks = unsortedList.getNumberOfBlocks();
+			int usedCacheBlocks = unsortedList.getNumberOfUsedBlocks();
+			String filePath = unsortedList.getFilePath();
+			IOTypes ioType = unsortedList.getIOType();
+			
+			BigArrayList<T> sortedList = new BigArrayList<T>(blockSize, cacheBlocks, filePath, ioType);
+				
+			for(int i=usedCacheBlocks-1; i>=0; i--)
+			{
+				int cacheBlockSpot = -1;
+	
+				if(!unsortedCacheMapping.isFileInCache(i))
+				{
+					unsortedCacheMapping.bringFileIntoCache(i);
+				}
+		
+				cacheBlockSpot = unsortedCacheMapping.getCacheBlockSpot(i);
+				unsortedCacheMapping.setDirtyBit(cacheBlockSpot, true);
+				Collections.sort(unsortedList.getList(cacheBlockSpot), comparator);
+			}	
+				
+			if(usedCacheBlocks > 1)
+			{
+				int currentRun = 0;
+				long totalRuns = 64 - Long.numberOfLeadingZeros(usedCacheBlocks-1);
+					
+				while(currentRun < totalRuns)
+				{
+					sortedList = merge(unsortedList, comparator, currentRun);
+		
+					unsortedList.clearMemory();
+						
+					unsortedList = sortedList;
+					currentRun++;
+				}
+			}
+			else
+			{
+				sortedList = unsortedList;
+			}
+				
+			return sortedList;
+		}
+	}
+	
+	/**
+	 * Internal function used to sort.  This is the step to merge two sorted pieces together into a single sorted list.
+	 * 
+	 * @param unsortedList The list
+	 * @param comparator How to compare the elements
+	 * @param currentRun What run step the merge is being used on.  This is to determine what merge pieces to merge and their sizes
+	 * @return The unsorted list with the sorted merged pieces.
+	 */
+	private static<T extends Comparable<? super T>> BigArrayList<T> merge(BigArrayList<T> unsortedList, Comparator<? super T> comparator, int currentRun)
+	{
+		int blockSize = unsortedList.getBlockSize();
+		int cacheBlocks = unsortedList.getNumberOfBlocks();
+		long usedCacheBlocksLong = unsortedList.getNumberOfUsedBlocks();
+		String filePath = unsortedList.getFilePath();
+		IOTypes ioType = unsortedList.getIOType();
+		
+		BigArrayList<T> sortedList = new BigArrayList<T>(blockSize, cacheBlocks, filePath, ioType);
+		
+		int blockIncrement = ipow(2, currentRun);
+		
+		for(long i=0; i<usedCacheBlocksLong; i=i+blockIncrement+blockIncrement)
+		{
+			long mergePiece1 = i;
+			long mergePiece2 = -1;
+			long mergePiece3 = -1;
+			
+			long firstElementStart = mergePiece1*blockSize;
+			long secondElementStart = -1;
+			
+			long firstElementEnd = -1;
+			long secondElementEnd = -1;
+			
+			long currentMergeElements = 0l;
+			long totalMergeElements = -1;
+			
+			if(i+blockIncrement < usedCacheBlocksLong)
+			{
+				mergePiece2 = i+blockIncrement;
+				mergePiece3 = i+blockIncrement+blockIncrement;
+				
+				secondElementStart = mergePiece2*blockSize;
+				firstElementEnd = secondElementStart;
+				
+				if(unsortedList.size() >= mergePiece3*blockSize)
+				{
+					secondElementEnd = mergePiece3*blockSize;
+				}
+				else
+				{
+					secondElementEnd = unsortedList.size();
+				}
+				
+				totalMergeElements = secondElementEnd - firstElementStart;
+			}
+			else
+			{				
+				if(unsortedList.size() >= (i+blockIncrement)*blockSize)
+				{
+					firstElementEnd = (i+blockIncrement)*blockSize;
+				}
+				else
+				{
+					firstElementEnd = unsortedList.size();
+				}
+				
+				totalMergeElements = firstElementEnd - firstElementStart;
+			}
+						
+	
+			long index1 = firstElementStart;
+			long index2 = secondElementStart;
+						
+			if(mergePiece2 == -1 || mergePiece2 >= usedCacheBlocksLong)
+			{
+				T element1 = unsortedList.get(index1);
+
+				while(currentMergeElements < totalMergeElements)
+				{
+					sortedList.add(element1);
+					index1++;
+					
+					if(index1 < firstElementEnd)
+					{
+						element1 = unsortedList.get(index1);
+					}
+					
+					currentMergeElements++;
+				}
+			}
+			else
+			{
+				T element1 = unsortedList.get(index1);
+				T element2 = unsortedList.get(index2);
+				
+				while(currentMergeElements < totalMergeElements)
+				{
+					if(index2 >= secondElementEnd)
+					{
+						sortedList.add(element1);
+						index1++;
+						
+						if(index1 < firstElementEnd)
+						{
+							element1 = unsortedList.get(index1);
+						}
+					}
+					else if(index1 >= firstElementEnd)
+					{
+						sortedList.add(element2);
+						index2++;
+						
+						if(index2 < secondElementEnd)
+						{
+							element2 = unsortedList.get(index2);
+						}
+					}
+					else
+					{
+						if(comparator.compare(element1, element2) <= 0)
+						{
+							sortedList.add(element1);
+							index1++;
+							
+							if(index1 < firstElementEnd)
+							{
+								element1 = unsortedList.get(index1);
+							}
+						}
+						else
+						{
+							sortedList.add(element2);
+							index2++;
+							
+							if(index2 < secondElementEnd)
+							{
+								element2 = unsortedList.get(index2);
+							}
+						}
+					}
+					
+					currentMergeElements++;
+				}
+			}
+		}
+		
+		return sortedList;
+	}
+	
+	
+	//skipping bound checks, trusting the caller to know that the result will not be greater an integer
+	/**
+	 * Internal function used by sorting.
+	 * modified function from http://stackoverflow.com/questions/101439/the-most-efficient-way-to-implement-an-integer-based-power-function-powint-int
+	 * 
+	 * @param base Base number
+	 * @param exp Exponent
+	 * @return Ceiling of base^exp as a power of two
+	 */
+	private static int ipow(int base, int exp)
+	{
+	    int result = 1;
+	    
+	    while (exp != 0)
+	    {
+	        if ((exp & 1) == 1)
+	        {
+	            result *= base;
+	        }
+	        
+	        exp >>= 1;
+	        base *= base;
+	    }
+
+	    return result;
+	}
 
 	/**
 	 * Purges all actions in the queue
@@ -426,7 +808,7 @@ public class BigArrayList<E>
 			int fileNumber = cacheMapping.getFileNumber(startIndex);
 			int nextFileNumber = fileNumber+1;
 			long virtualSize = wholeListSize + softMapping.getLastShiftAmount();
-			int usedCacheBlocks = cacheMapping.getNumberOfUsedBlocks(virtualSize);
+			int usedCacheBlocks = getNumberOfUsedBlocks(virtualSize);
 					
 			int cacheBlockSpot = -1;
 			int nextCacheBlockSpot = -1;
@@ -462,7 +844,7 @@ public class BigArrayList<E>
 				List<E> nextCacheBlock = arrayLists.get(nextCacheBlockSpot);
 					
 				//SHOULD FIND MAX SHIFT TOO
-				while(cacheBlock.size() < cacheMapping.getBlockSize() && nextFileNumber < usedCacheBlocks)
+				while(cacheBlock.size() < getBlockSize() && nextFileNumber < usedCacheBlocks)
 				{
 					if(nextCacheBlock.size() > 0)
 					{
@@ -549,7 +931,7 @@ public class BigArrayList<E>
 			int fileNumber = cacheMapping.getFileNumber(startIndex);
 			int nextFileNumber = fileNumber+1;
 			long virtualSize = wholeListSize + softMapping.getLastShiftAmount();
-			int usedCacheBlocks = cacheMapping.getNumberOfUsedBlocks(virtualSize);
+			int usedCacheBlocks = getNumberOfUsedBlocks(virtualSize);
 				
 			int cacheBlockSpot = -1;
 			int nextCacheBlockSpot = -1;
@@ -594,7 +976,7 @@ public class BigArrayList<E>
 				List<E> nextCacheBlock = arrayLists.get(nextCacheBlockSpot);
 				
 				//shift down to current block
-				while(cacheBlock.size() < cacheMapping.getBlockSize() && !done)
+				while(cacheBlock.size() < getBlockSize() && !done)
 				{
 					if(nextCacheBlock.size() > 0)
 					{
@@ -818,7 +1200,7 @@ public class BigArrayList<E>
 		int cacheBlockSpot = cacheMapping.getCacheBlockSpot(fileNumber);
 		int spotInCache = cacheMapping.getSpotInCache(adjustedIndex);
 		long virtualSize = wholeListSize + softMapping.getLastShiftAmount();
-		int usedCacheBlocks = cacheMapping.getNumberOfUsedBlocks(virtualSize);
+		int usedCacheBlocks = getNumberOfUsedBlocks(virtualSize);
 		
 		List<E> cacheBlock = arrayLists.get(cacheBlockSpot);		
 		E element = cacheBlock.remove(spotInCache);

@@ -32,45 +32,6 @@ import java.io.IOException;
  */
 class CacheMapping<E>
 {
-	/**
-	 * Default size of cache block = 1,000,000
-	 */
-	private static final int DEFAULT_BLOCK_SIZE = 1000000;
-	
-	/**
-	 * Default number of cache blocks = 2
-	 */
-	private static final int DEFAULT_CACHE_BLOCKS = 2;
-
-	/**
-	 * The minimum size of a cache block = 5 elements
-	 */
-	private static final int MIN_CACHE_SIZE = 5;
-	
-	/**
-	 * The maximum size of a cache block = the integer limit of 2^31 - 1
-	 */
-	private static final int MAX_CACHE_SIZE = Integer.MAX_VALUE;
-
-	/**
-	 * The minimum number of cache blocks = 2
-	 */
-	private static final int MIN_CACHE_BLOCKS = 2;
-	
-	/**
-	 * The maximum number of cache blocks = the integer limit of 2^31 - 1
-	 */
-	private static final int MAX_CACHE_BLOCKS = Integer.MAX_VALUE;
-
-	/**
-	 * The size of the cache blocks
-	 */
-	private int blockSize;
-	
-	/**
-	 * The number of cache blocks
-	 */
-	private int cacheBlocks;
 
 	/**
 	 * Array storing the next spot to add to for each cache
@@ -107,32 +68,6 @@ class CacheMapping<E>
 	 */
 	private FileAccessor<E> fileAccessor;
 
-	/**
-	 * Constructs a CacheMapping object for the BigArrayList
-	 * 
-	 * @param theList Associated BigArrayList
-	 */
-	protected CacheMapping(BigArrayList<E> theList)
-	{
-		blockSize = DEFAULT_BLOCK_SIZE;
-		cacheBlocks = DEFAULT_CACHE_BLOCKS;
-
-		cacheTableSpots = new int[cacheBlocks];
-		cacheTableFiles = new int[cacheBlocks];
-		mostRecentlyUsedList = new int[cacheBlocks];
-		dirtyBits = new boolean[cacheBlocks];
-
-		for(int i=0; i<cacheBlocks; i++)
-		{
-			cacheTableSpots[i] = 0;
-			cacheTableFiles[i] = -1;
-			mostRecentlyUsedList[i] = -1;
-			dirtyBits[i] = false;
-		}
-
-		bigArrayList = theList;
-		fileAccessor = new FileAccessor<E>();
-	}
 
 	/**
 	 * Constructs a CacheMapping object for the BigArrayList with the following parameters
@@ -140,21 +75,10 @@ class CacheMapping<E>
 	 * @param blockSize Size of each cache block
 	 * @param cacheBlocks Number of cache blocks
 	 * @param theList Associated BigArrayList
+	 * @param memoryPath The file path to store contents on disk
 	 */
-	protected CacheMapping(int blockSize, int cacheBlocks, BigArrayList<E> theList)
+	protected CacheMapping(BigArrayList<E> theList, int blockSize, int cacheBlocks, String memoryPath)
 	{
-		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
-		{
-			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
-		}
-
-		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
-		{
-			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
-		}
-	
-		this.blockSize = blockSize;
-		this.cacheBlocks = cacheBlocks;
 		cacheTableSpots = new int[cacheBlocks];
 		cacheTableFiles = new int[cacheBlocks];
 		mostRecentlyUsedList = new int[cacheBlocks];
@@ -168,75 +92,34 @@ class CacheMapping<E>
 			dirtyBits[i] = false;
 		}
 		
-		bigArrayList = theList;
-		fileAccessor = new FileAccessor<E>();
-	}
-
-	/**
-	 * Constructs a CacheMapping object for the BigArrayList with the following parameters
-	 * 
-	 * @param memoryFilePath Folder path to where the data should be written
-	 * @param theList Associated BigArrayList
-	 */
-	protected CacheMapping(String memoryFilePath, BigArrayList<E> theList)
-	{
-		blockSize = DEFAULT_BLOCK_SIZE;
-		cacheBlocks = DEFAULT_CACHE_BLOCKS;
-
-		cacheTableSpots = new int[cacheBlocks];
-		cacheTableFiles = new int[cacheBlocks];
-		mostRecentlyUsedList = new int[cacheBlocks];
-		dirtyBits = new boolean[cacheBlocks];
-
-		for(int i=0; i<cacheBlocks; i++)
-		{
-			cacheTableSpots[i] = 0;
-			cacheTableFiles[i] = -1;
-			mostRecentlyUsedList[i] = -1;
-			dirtyBits[i] = false;
-		}
-
-		bigArrayList = theList;
-		fileAccessor = new FileAccessor<E>(memoryFilePath);
-	}
-
-	/**
-	 * Constructs a CacheMapping object for the BigArrayList with the following parameters
-	 * 
-	 * @param blockSize Size of each cache block
-	 * @param cacheBlocks Number of cache blocks
-	 * @param memoryPath Folder path to where the data should be written
-	 * @param theList Associated BigArrayList
-	 */
-	protected CacheMapping(int blockSize, int cacheBlocks, String memoryPath, BigArrayList<E> theList)
-	{
-		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
-		{
-			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
-		}
-
-		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
-		{
-			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
-		}
-		
-		this.blockSize = blockSize;
-		this.cacheBlocks = cacheBlocks;
-		cacheTableSpots = new int[cacheBlocks];
-		cacheTableFiles = new int[cacheBlocks];
-		mostRecentlyUsedList = new int[cacheBlocks];
-		dirtyBits = new boolean[cacheBlocks];
-
-		for(int i=0; i<cacheBlocks; i++)
-		{
-			cacheTableSpots[i] = 0;
-			cacheTableFiles[i] = -1;
-			mostRecentlyUsedList[i] = -1;
-			dirtyBits[i] = false;
-		}
-
 		bigArrayList = theList;
 		fileAccessor = new FileAccessor<E>(memoryPath);
+	}
+	
+	/**
+	 * Constructs a CacheMapping object for the BigArrayList with the following parameters
+	 * 
+	 * @param blockSize Size of each cache block
+	 * @param cacheBlocks Number of cache blocks
+	 * @param theList Associated BigArrayList
+	 */
+	protected CacheMapping(BigArrayList<E> theList, int blockSize, int cacheBlocks)
+	{
+		cacheTableSpots = new int[cacheBlocks];
+		cacheTableFiles = new int[cacheBlocks];
+		mostRecentlyUsedList = new int[cacheBlocks];
+		dirtyBits = new boolean[cacheBlocks];
+
+		for(int i=0; i<cacheBlocks; i++)
+		{
+			cacheTableSpots[i] = 0;
+			cacheTableFiles[i] = -1;
+			mostRecentlyUsedList[i] = -1;
+			dirtyBits[i] = false;
+		}
+		
+		bigArrayList = theList;
+		fileAccessor = new FileAccessor<E>();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,50 +132,8 @@ class CacheMapping<E>
 		return fileAccessor;
 	}
 	
-	/**
-	 * @return Returns the size of each cache block
-	 */
-	protected int getBlockSize()
-	{
-		return blockSize;
-	}
 
-	/**
-	 * @return Returns the number of cache blocks
-	 */
-	protected int getNumberOfBlocks()
-	{
-		return cacheBlocks;
-	}
 	
-	/**
-	 * @return Returns the number of used cache blocks based on the size of the list
-	 */
-	protected int getNumberOfUsedBlocks()
-	{
-		long blockSizeLong = blockSize;
-		long usedBlocks = (long) Math.ceil(bigArrayList.size() * 1.0 / blockSizeLong * 1.0);
-		
-		//safe cast, I really doubt there will ever be over 2^31 - 1 blocks
-		return (int)usedBlocks;
-	}
-	
-	/**
-	 * Returns the minimum of the number of used cache blocks based on the list size or the parameter size
-	 * 
-	 * @param index A virtual size index
-	 * @return The number of used cache blocks
-	 */
-	protected int getNumberOfUsedBlocks(long index)
-	{
-		long blockSizeLong = blockSize;
-		long usedVirtualBlocks = (long) Math.ceil(index * 1.0 / blockSizeLong * 1.0);
-		long usedRealBlocks = getNumberOfUsedBlocks();
-		long usedBlocks = Math.max(usedRealBlocks, usedVirtualBlocks);
-		
-		//safe cast, I really doubt there will ever be over 2^31 - 1 blocks
-		return (int)usedBlocks;
-	}
 
 	/**
 	 * Sets the index to add the next element to for the given cache block
@@ -324,7 +165,7 @@ class CacheMapping<E>
 	{
 		boolean full = false;
 
-		if(cacheTableSpots[block] >= blockSize)
+		if(cacheTableSpots[block] >= bigArrayList.getBlockSize())
 		{
 			full = true;
 		}
@@ -374,7 +215,7 @@ class CacheMapping<E>
 	 */
 	protected int getFileNumber(long index)
 	{
-		long blockSizeLong = blockSize;
+		long blockSizeLong = bigArrayList.getBlockSize();
 		long longFileNumber = index / blockSizeLong;
 		
 		//safe cast, I really doubt there will ever be over 2^31 - 1 files
@@ -389,7 +230,7 @@ class CacheMapping<E>
 	 */
 	protected long getLastIndexInFile(int fileNumber)
 	{
-		long blockSizeLong = blockSize;
+		long blockSizeLong = bigArrayList.getBlockSize();
 		long fileNumberLong = fileNumber;
 		long index = (blockSizeLong * fileNumberLong) + blockSizeLong - 1;
 		return index;
@@ -424,7 +265,7 @@ class CacheMapping<E>
 	 */
 	protected int getSpotInCache(long index)
 	{
-		long longTableSize = blockSize;
+		long longTableSize = bigArrayList.getBlockSize();
 		long spotInFile = index % longTableSize;
 		
 		//safe cast, cannot be > 2^31 - 1 elements in an ArrayList

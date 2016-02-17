@@ -127,7 +127,11 @@ class FileAccessor<E>
 			System.exit(-1);
 		}
 		
-		fstConfiguration = FSTConfiguration.createDefaultConfiguration();
+		if(fstConfiguration == null)
+		{
+			fstConfiguration = FSTConfiguration.createDefaultConfiguration();
+		}
+
 	}
 
 	/**
@@ -156,7 +160,10 @@ class FileAccessor<E>
 			System.exit(-1);
 		}
 		
-		fstConfiguration = FSTConfiguration.createDefaultConfiguration();
+		if(fstConfiguration == null)
+		{
+			fstConfiguration = FSTConfiguration.createDefaultConfiguration();
+		}
 	}
 
 	/**
@@ -291,7 +298,7 @@ class FileAccessor<E>
 			
 			try
 			{
-				arrayList.setArrayList(cacheSpot, (ArrayList<E>)objectInputStream.readObject());
+				arrayList.setList(cacheSpot, (ArrayList<E>)objectInputStream.readObject());
 			}
 			catch(IOException ioe)
 			{
@@ -311,7 +318,7 @@ class FileAccessor<E>
 		}
 		else
 		{
-			arrayList.setArrayList(cacheSpot, new ArrayList<E>());
+			arrayList.setList(cacheSpot, new ArrayList<E>());
 		}
 	}
 	
@@ -358,7 +365,7 @@ class FileAccessor<E>
 				
 					try
 					{
-						arrayList.setArrayList(cacheSpot, (ArrayList<E>)objectInputStream.readObject());
+						arrayList.setList(cacheSpot, (ArrayList<E>)objectInputStream.readObject());
 					}
 					catch(IOException ioe)
 					{
@@ -379,7 +386,7 @@ class FileAccessor<E>
 			}
 			else
 			{
-				arrayList.setArrayList(cacheSpot, new ArrayList<E>());
+				arrayList.setList(cacheSpot, new ArrayList<E>());
 			}
 
 	}
@@ -406,7 +413,7 @@ class FileAccessor<E>
 			
 			try
 			{
-				arrayList.setArrayList(cacheSpot, (ArrayList<E>)fstObjectInputStream.readObject());
+				arrayList.setList(cacheSpot, (ArrayList<E>)fstObjectInputStream.readObject());
 			}
 			catch(IOException ioe)
 			{
@@ -427,7 +434,7 @@ class FileAccessor<E>
 		}
 		else
 		{
-			arrayList.setArrayList(cacheSpot, new ArrayList<E>());
+			arrayList.setList(cacheSpot, new ArrayList<E>());
 		}
 
 	}
@@ -474,7 +481,7 @@ class FileAccessor<E>
 					
 						byte[] byteArray = new byte[fileLength];
 						tempByteBuffer.get(byteArray);
-						arrayList.setArrayList(cacheSpot, (ArrayList<E>)fstConfiguration.asObject(byteArray));
+						arrayList.setList(cacheSpot, (ArrayList<E>)fstConfiguration.asObject(byteArray));
 						
 						tempByteBuffer.clear();
 					}
@@ -493,7 +500,7 @@ class FileAccessor<E>
 			}
 			else
 			{
-				arrayList.setArrayList(cacheSpot, new ArrayList<E>());
+				arrayList.setList(cacheSpot, new ArrayList<E>());
 			}
 	}
 
@@ -511,7 +518,7 @@ class FileAccessor<E>
 
 		File tempFile = new File(filePath);
 		
-		if(!arrayList.getArrayList(cacheSpot).isEmpty())
+		if(!arrayList.getList(cacheSpot).isEmpty())
 		{
 			tempFile.deleteOnExit();
 			
@@ -521,7 +528,7 @@ class FileAccessor<E>
 			
 			try
 			{
-				objectOutputStream.writeObject(arrayList.getArrayList(cacheSpot));
+				objectOutputStream.writeObject(arrayList.getList(cacheSpot));
 				objectOutputStream.flush();			
 			}
 			catch(IOException ioe)
@@ -557,7 +564,7 @@ class FileAccessor<E>
 	{
 		String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
 
-		if(!arrayList.getArrayList(cacheSpot).isEmpty())
+		if(!arrayList.getList(cacheSpot).isEmpty())
 		{
 			RandomAccessFile tempFile = new RandomAccessFile(filePath, "rw");	
 			
@@ -567,7 +574,7 @@ class FileAccessor<E>
 			
 			try
 			{
-				objectOutputStream.writeObject(arrayList.getArrayList(cacheSpot));
+				objectOutputStream.writeObject(arrayList.getList(cacheSpot));
 				objectOutputStream.flush();
 				
 				byte[] byteArray = baos.toByteArray();
@@ -611,7 +618,7 @@ class FileAccessor<E>
 
 		File tempFile = new File(filePath);
 		
-		if(!arrayList.getArrayList(cacheSpot).isEmpty())
+		if(!arrayList.getList(cacheSpot).isEmpty())
 		{
 			tempFile.deleteOnExit();
 		
@@ -620,7 +627,7 @@ class FileAccessor<E>
 
 			try
 			{
-				byte byteArray[] = fstConfiguration.asByteArray(arrayList.getArrayList(cacheSpot));
+				byte byteArray[] = fstConfiguration.asByteArray(arrayList.getList(cacheSpot));
 				fstObjectOutputStream.write(byteArray);
 				fstObjectOutputStream.flush();
 			}
@@ -655,14 +662,14 @@ class FileAccessor<E>
 	{
 		String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
 
-		if(!arrayList.getArrayList(cacheSpot).isEmpty())
+		if(!arrayList.getList(cacheSpot).isEmpty())
 		{
 			RandomAccessFile tempFile = new RandomAccessFile(filePath, "rw");
 			MappedByteBuffer tempByteBuffer;
 			
 			try
 			{
-				byte byteArray[] = fstConfiguration.asByteArray(arrayList.getArrayList(cacheSpot));
+				byte byteArray[] = fstConfiguration.asByteArray(arrayList.getList(cacheSpot));
 				tempByteBuffer = tempFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, byteArray.length);
 				tempByteBuffer.put(byteArray);
 				tempByteBuffer.force();
