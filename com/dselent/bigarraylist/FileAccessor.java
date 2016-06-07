@@ -48,7 +48,7 @@ import org.nustaq.serialization.FSTObjectOutput;
  *
  * @param <E> Generic type
  */
-class FileAccessor<E>
+class FileAccessor<E extends Serializable>
 {
 	/**
 	 * Unique identifier for the files associated with a specific instance of BigArrayList

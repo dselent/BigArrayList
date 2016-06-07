@@ -20,6 +20,7 @@
 package com.dselent.bigarraylist;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -64,9 +65,8 @@ import java.util.List;
  *
  * @param <E> Generic type
  */
-public class BigArrayList<E>
+public class BigArrayList<E extends Serializable>
 {
-
 	/**
 	 * The ArrayList of cache blocks.
 	 * Each ArrayList corresponds to a cache block currently in memory
@@ -171,7 +171,8 @@ public class BigArrayList<E>
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			List<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<E>();
+			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
@@ -197,7 +198,8 @@ public class BigArrayList<E>
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			List<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<E>();
+			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
@@ -224,7 +226,8 @@ public class BigArrayList<E>
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			List<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<E>();
+			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
@@ -261,7 +264,8 @@ public class BigArrayList<E>
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			List<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<E>();
+			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
@@ -299,7 +303,8 @@ public class BigArrayList<E>
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			List<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<E>();
+			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
@@ -338,7 +343,8 @@ public class BigArrayList<E>
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			List<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<E>();
+			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
@@ -377,7 +383,8 @@ public class BigArrayList<E>
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			List<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<E>();
+			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
@@ -548,7 +555,7 @@ public class BigArrayList<E>
 	 * @return The list in sorted order
 	 * @throws IOException
 	 */
-	public static<T extends Comparable<? super T>> BigArrayList<T> sort(BigArrayList<T> unsortedList) throws IOException
+	public static<T extends Comparable<? super T> & Serializable> BigArrayList<T> sort(BigArrayList<T> unsortedList) throws IOException
 	{
 		return sort(unsortedList, Comparator.naturalOrder());
 	}
@@ -562,7 +569,7 @@ public class BigArrayList<E>
 	 * @return The list in sorted order
 	 * @throws IOException
 	 */
-	public static<T extends Comparable<? super T>> BigArrayList<T> sort(BigArrayList<T> unsortedList, Comparator<? super T> comparator) throws IOException
+	public static<T extends Comparable<? super T> & Serializable> BigArrayList<T> sort(BigArrayList<T> unsortedList, Comparator<? super T> comparator) throws IOException
 	{
 		if(unsortedList.size() <= 1)
 		{
@@ -627,7 +634,7 @@ public class BigArrayList<E>
 	 * @param currentRun What run step the merge is being used on.  This is to determine what merge pieces to merge and their sizes
 	 * @return The unsorted list with the sorted merged pieces.
 	 */
-	private static<T extends Comparable<? super T>> BigArrayList<T> merge(BigArrayList<T> unsortedList, Comparator<? super T> comparator, int currentRun)
+	private static<T extends Comparable<? super T> & Serializable> BigArrayList<T> merge(BigArrayList<T> unsortedList, Comparator<? super T> comparator, int currentRun)
 	{
 		int blockSize = unsortedList.getBlockSize();
 		int cacheBlocks = unsortedList.getNumberOfBlocks();
@@ -1083,6 +1090,7 @@ public class BigArrayList<E>
 	public boolean add(E element)
 	{
 		boolean added = false;
+
 		long adjustedIndex = softMapping.getAdjustedIndex(wholeListSize);
 		int lastFile = cacheMapping.getFileNumber(adjustedIndex);
 		int cacheBlockSpot = -1;
@@ -1091,7 +1099,6 @@ public class BigArrayList<E>
 		{
 			//bring last file into cache
 			cacheMapping.bringFileIntoCache(lastFile);
-
 		}
 
 		cacheBlockSpot = cacheMapping.getCacheBlockSpot(lastFile);
@@ -1101,7 +1108,6 @@ public class BigArrayList<E>
 		if(!cacheMapping.isCacheFull(cacheBlockSpot))
 		{
 			//add to last array list and update cache entry
-
 			added = arrayLists.get(cacheBlockSpot).add(element);
 
 			if(added)
@@ -1110,6 +1116,7 @@ public class BigArrayList<E>
 				cacheMapping.setDirtyBit(cacheBlockSpot, true);
 				wholeListSize++;
 			}
+			
 		}
 		else
 		{

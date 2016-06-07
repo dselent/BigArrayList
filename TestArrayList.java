@@ -1,146 +1,306 @@
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
+
 
 public class TestArrayList
 {
 
-	public void test(long testSize)
+
+	public void test(int testSize, int warmupIterations) throws Exception
 	{
 		//ADD
 
-		long TEST_SIZE = testSize;
-		int NUMBER_OF_ITERATIONS = 100;
 
-		ArrayList<Long> arrayList = new ArrayList<Long>();
+		int TEST_SIZE = testSize;
+		int GET_SIZE_ORDERED = TEST_SIZE;
+		int SET_SIZE_ORDERED = TEST_SIZE;
+		int GET_SIZE_RANDOM = TEST_SIZE;
+		int SET_SIZE_RANDOM = TEST_SIZE;
 
-		long start1 = System.currentTimeMillis();
-
-		for(long i=0; i<TEST_SIZE; i++)
+		for(int i=0; i<warmupIterations; i++)
 		{
-			arrayList.add(i);
+			ArrayList<Long> arrayList = new ArrayList<Long>();
+			arrayList.ensureCapacity(TEST_SIZE);
+			add(arrayList, TEST_SIZE, true);
+			arrayList.clear();
 		}
+			
+		//
+		
+		ArrayList<Long> arrayList = new ArrayList<Long>();
+		arrayList.ensureCapacity(TEST_SIZE);
 
-		long end1 = System.currentTimeMillis();
+		add(arrayList, TEST_SIZE, false);
 
-		long totalTime1 = end1 - start1;
+		System.gc();
+		
+    	Runtime runtime = Runtime.getRuntime();
 
-		System.out.println("Total ADD time (ms) = " + totalTime1);
-
-    		Runtime runtime = Runtime.getRuntime();
-
-    		long totalMemory = runtime.totalMemory();
-    		long freeMemory = runtime.freeMemory();
+    	long totalMemory = runtime.totalMemory();
+    	long freeMemory = runtime.freeMemory();
 
 		System.out.println("Memory used (bytes) = " + (totalMemory - freeMemory));
+		System.out.println("Folder Size (bytes) = " + getFolderSize());
+
 
 		//////////////////////////////////////////////////////////////////////////////////
 
 		//GET ORDERED
 
-		long start2 = System.currentTimeMillis();
-
-		for(int iterations=0; iterations<NUMBER_OF_ITERATIONS; iterations++)
+		for(int i=0; i<warmupIterations; i++)
 		{
-			for(int i=0; i<TEST_SIZE; i++)
+			sequentialGet(arrayList, GET_SIZE_ORDERED, true);
+		}
+		
+		//
+		
+		sequentialGet(arrayList, GET_SIZE_ORDERED, false);
+
+		
+		//////////////////////////////////////////////////////////////////////////////////
+		
+		
+		//SET ORDERED
+
+		for(int i=0; i<warmupIterations; i++)
+		{
+			sequentialSet(arrayList, SET_SIZE_ORDERED, true);
+		}
+		
+		//
+		
+		sequentialSet(arrayList, SET_SIZE_ORDERED, false);
+
+		///////////////////////////////////////////////////////////////////////////////
+			
+
+		//GET RANDOM
+		
+		for(int i=0; i<warmupIterations; i++)
+		{
+			randomGet(arrayList, GET_SIZE_RANDOM, TEST_SIZE, true);
+			
+		}
+		
+		//
+		
+		randomGet(arrayList, GET_SIZE_RANDOM, TEST_SIZE, false);
+
+		
+		///////////////////////////////////////////////////////////////////////////////
+
+
+		//SET RANDOM
+
+		for(int i=0; i<warmupIterations; i++)
+		{
+			randomSet(arrayList, SET_SIZE_RANDOM, TEST_SIZE, true);
+			
+		}
+		
+		//
+		
+		randomSet(arrayList, SET_SIZE_RANDOM, TEST_SIZE, false);
+		
+	}
+	
+	private void add(ArrayList<Long> arrayList, long testSize, boolean warmup)
+	{		
+		if(!warmup)
+		{
+			System.out.println("START ADD");
+		}
+
+		long start = System.currentTimeMillis();
+		
+		for(long i=0; i<testSize; i++)
+		{
+			arrayList.add(i);
+		}
+		
+		long end = System.currentTimeMillis();
+		
+		if(!warmup)
+		{
+			System.out.println("END ADD");
+			long totalTime = end - start;
+			System.out.println("Total ADD time (ms) = " + totalTime);
+		}
+	}
+	
+	private void sequentialGet(ArrayList<Long> arrayList, int getSize, boolean warmup)
+	{
+		if(!warmup)
+		{
+			System.out.println("START SEQUENTIAL GET");
+		}
+		
+		long start = System.currentTimeMillis();
+
+		for(int iterations=0; iterations<1000; iterations++)
+		{
+			for(int i=0; i<getSize; i++)
 			{
 				arrayList.get(i);
 			}
 		}
 
-		long end2 = System.currentTimeMillis();
-
-		long totalTime2 = end2 - start2;
-
-		System.out.println("Total GET ORDERED time (ms) = " + totalTime2);
-
-
-		///////////////////////////////////////////////////////////////////////////////////
+		long end = System.currentTimeMillis();
 		
-		//GET RANDOM
-
-		int[] randomElements = new int[(new Long(TEST_SIZE)).intValue()];
-		Random r = new Random(0);
-
-		for(int i=0; i<TEST_SIZE; i++)
+		if(!warmup)
 		{
-			randomElements[i] = r.nextInt((new Long(TEST_SIZE)).intValue());
+			System.out.println("END SEQUENTIAL GET");
+			long totalTime = end - start;
+			System.out.println("Total SEQUENTIAL GET time (ms) = " + totalTime);
 		}
-
-		long start3 = System.currentTimeMillis();
-
-		for(int iterations=0; iterations<NUMBER_OF_ITERATIONS; iterations++)
+	}
+	
+	private void sequentialSet(ArrayList<Long> arrayList, int setSize, boolean warmup)
+	{
+		if(!warmup)
 		{
-			for(int i=0; i<TEST_SIZE; i++)
-			{
-				arrayList.get(randomElements[i]);
-			}
+			System.out.println("START SEQUENTIAL SET");
 		}
+		
+		long start = System.currentTimeMillis();
 
-		long end3 = System.currentTimeMillis();
-
-		long totalTime3 = end3 - start3;
-
-		System.out.println("Total GET RANDOM time (ms) = " + totalTime3);
-
-		////////////////////////////////////////////////////////////////////////////////
-
-		//SET ORDERED
-
-		long start4 = System.currentTimeMillis();
-
-		for(int iterations=0; iterations<NUMBER_OF_ITERATIONS; iterations++)
+		for(int iterations=0; iterations<1000; iterations++)
 		{
-			for(int i=0; i<TEST_SIZE; i++)
+			for(int i=0; i<setSize; i++)
 			{
 				arrayList.set(i, 1l);
 			}
 		}
 
-		long end4 = System.currentTimeMillis();
-
-		long totalTime4 = end4 - start4;
-
-		System.out.println("Total SET ORDERED time (ms) = " + totalTime4);
-
-		////////////////////////////////////////////////////////////////////////////////
-
-		//SET RANDOM
-
-		int[] randomElements1 = new int[(new Long(TEST_SIZE)).intValue()];
-		Random r1 = new Random(0);
-
-		for(int i=0; i<TEST_SIZE; i++)
+		long end = System.currentTimeMillis();
+		
+		if(!warmup)
 		{
-			randomElements1[i] = r1.nextInt((new Long(TEST_SIZE)).intValue());
+			System.out.println("END SEQUENTIAL SET");
+			long totalTime = end - start;
+			System.out.println("Total SEQUENTIAL SET time (ms) = " + totalTime);
 		}
+	}
+	
+	private void randomGet(ArrayList<Long> arrayList, int getSize, long testSize, boolean warmup)
+	{
+		
+		int[] randomElements = new int[getSize];
+		Random r = new Random(0);
 
-		long start5 = System.currentTimeMillis();
-
-		for(int iterations=0; iterations<NUMBER_OF_ITERATIONS; iterations++)
+		for(int i=0; i<getSize; i++)
 		{
-			for(int i=0; i<TEST_SIZE; i++)
+			if(testSize >= Integer.MAX_VALUE)
 			{
-				arrayList.set(randomElements1[i], 1l);
+				randomElements[i] = r.nextInt(Integer.MAX_VALUE);
+			}
+			else
+			{
+				randomElements[i] = r.nextInt((new Long(testSize)).intValue());
+			}
+		}
+		
+		if(!warmup)
+		{
+			System.out.println("START RANDOM GET");
+		}
+		
+		long start = System.currentTimeMillis();
+
+		for(int iterations=0; iterations<100; iterations++)
+		{
+			for(int i=0; i<getSize; i++)
+			{
+				arrayList.get(randomElements[i]);
 			}
 		}
 
-		long end5 = System.currentTimeMillis();
+		long end = System.currentTimeMillis();
+		
+		if(!warmup)
+		{
+			System.out.println("END RANDOM GET");
+			long totalTime = end - start;
+			System.out.println("Total RANDOM GET time (ms) = " + totalTime);
+		}
+	}
+	
+	private void randomSet(ArrayList<Long> arrayList, int setSize, long testSize, boolean warmup)
+	{
+		int[] randomElements = new int[setSize];
+		Random r1 = new Random(0);
 
-		long totalTime5 = end5 - start5;
+		for(int i=0; i<setSize; i++)
+		{
+			if(testSize >= Integer.MAX_VALUE)
+			{
+				randomElements[i] = r1.nextInt(Integer.MAX_VALUE);
+			}
+			else
+			{
+				randomElements[i] = r1.nextInt((new Long(testSize)).intValue());
+			}
+		}
+		
+		if(!warmup)
+		{
+			System.out.println("START RANDOM SET");
+		}
+		
+		long start = System.currentTimeMillis();
 
-		System.out.println("Total SET RANDOM time (ms) = " + totalTime5);		
+		for(int iterations=0; iterations<10; iterations++)
+		{
+			for(int i=0; i<setSize; i++)
+			{
+				arrayList.set(randomElements[i], 1l);
+			}
+		}
+
+		long end = System.currentTimeMillis();
+		
+		if(!warmup)
+		{
+			System.out.println("END RANDOM SET");
+			long totalTime = end - start;
+			System.out.println("Total RANDOM SET time (ms) = " + totalTime);
+		}
+	}
+
+	public long getFolderSize()
+	{
+		long size = 0;
+		File memoryFolder = new File("memory");
+		File files[] = memoryFolder.listFiles();
+
+		
+		if(files.length > 0)
+		{
+			size = size + files[0].length();
+
+			long actualSize = 4096l;
+
+			while(actualSize < size)
+			{
+				actualSize = actualSize + 4096;
+			}
+
+			size = actualSize * files.length;
+		}
+		
+		return size;
 	}
 
 
-	public static void main(String args[])
+	public static void main(String args[]) throws Exception
 	{
 		TestArrayList t = new TestArrayList();
-		
-		//input size, trial number
-		System.out.println(args[0] + "_" + args[1]);
-		t.test(Long.parseLong(args[0]));
-		System.out.println("\n\n");
 
+		
+		System.out.println(args[0] + "_" + args[1] + "_" + args[2]);
+		t.test(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+		System.out.println("\n\n");
 	}
 }

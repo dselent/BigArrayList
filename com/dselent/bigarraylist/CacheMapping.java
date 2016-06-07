@@ -20,6 +20,7 @@
 package com.dselent.bigarraylist;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 
 /**
@@ -30,7 +31,7 @@ import java.io.IOException;
  *
  * @param <E> Generic type
  */
-class CacheMapping<E>
+class CacheMapping<E extends Serializable>
 {
 
 	/**
@@ -399,7 +400,7 @@ class CacheMapping<E>
 		if(dirtyBits[blockIndex])
 		{
 			try
-			{
+			{				
 				if(bigArrayList.getIOType() == BigArrayList.IOTypes.OBJECT)
 				{
 					fileAccessor.writeToFileObject(fileNumber, blockIndex, bigArrayList);
@@ -464,7 +465,7 @@ class CacheMapping<E>
 		//clear a spot if there isn't one
 
 		int openCacheBlock = getFirstOpenCacheBlock();
-
+		
 		if(openCacheBlock == -1)
 		{
 			int blockToFlush = mostRecentlyUsedList[0];
@@ -484,7 +485,7 @@ class CacheMapping<E>
 		setCacheTableSpots(openCacheBlock, bigArrayList.getArraySize(openCacheBlock));
 
 		updateUsedList(openCacheBlock);
-
+		
 		return openCacheBlock;
 	}
 
