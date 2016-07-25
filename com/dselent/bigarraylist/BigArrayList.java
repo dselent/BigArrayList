@@ -634,7 +634,7 @@ public class BigArrayList<E extends Serializable>
 	 * @param currentRun What run step the merge is being used on.  This is to determine what merge pieces to merge and their sizes
 	 * @return The unsorted list with the sorted merged pieces.
 	 */
-	private static<T extends Comparable<? super T> & Serializable> BigArrayList<T> merge(BigArrayList<T> unsortedList, Comparator<? super T> comparator, int currentRun)
+	private static<T extends Serializable> BigArrayList<T> merge(BigArrayList<T> unsortedList, Comparator<? super T> comparator, int currentRun)
 	{
 		int blockSize = unsortedList.getBlockSize();
 		int cacheBlocks = unsortedList.getNumberOfBlocks();
