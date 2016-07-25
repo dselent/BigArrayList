@@ -1,0 +1,93 @@
+
+https://community.oracle.com/message/9020963
+
+Serialize your objects to byte arrays then save them in your RandomAccessFile. All you need to keep in memory
+is a list with the position and length of each serialized object.
+            // Serialize to a byte array
+            ByteArrayOutputStream bos = new ByteArrayOutputStream() ;
+            ObjectOutput out = new ObjectOutputStream(bos);
+            out.writeObject(objectToSerialize);
+            out.close();
+            // Get the bytes of the serialized object
+            byte[] buf = bos.toByteArray();
+            // save the position and length of the serialized object
+            int[] objectInfo = new int[2];
+            objectInfo[0] = position;
+            objectInfo[1] = buf.length;
+            objectList.add(objectInfo);
+            // write to the file
+            tmpFile.seek(position);
+            tmpFile.write(buf);
+            position += buf.len;
+On the read back seek to the saved position and read the saved count.
+            int[] objectInfo = (int[])objectList.get(index);
+            byte[] buf = new byte[objectInfo[1]];
+            tmpFile.seek(objectInfo[0]); // seek to the objects data
+            tmpFile.readFully(buf); // read the data 
+            ByteArrayInputStream bis = new ByteArrayInputStream(buf);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            deserializedObject = ois.readObject(); // deserialize data
+            ois.close();
+
+
+
+keep total objects in file count
+keep invalid objects in file count
+
+-write objects in order to file
+	-write location of object (byte position in file) (long)
+	-write if this object is valid (up to date)
+	-write index of object (arraylist object number) (long)
+	-write byte length of object to skip to next object (long)
+-write objects in middle of arraylist
+	-write new object to end of file
+	-update locations of objects after (by index) it
+-read objects in any order from file
+	-iteratively go through objects jumping when able
+	-still consider invlaid objects because they have the jump to locations
+	-do not consider deleted objects
+-update object in middle of file
+	-put entry at end of file
+	-update location of original+predecessor entry
+	-update validity of original+predecessor entry
+	-multiple updates will result in bad entries in the middle of the file
+-remove object from any location from file
+	-update all object positions after it (may want to do this is memory and not in file? do in file as a bunch)
+		-original invalid entry positions need to be updated too
+	-invalidate
+		-invalidate predecessor if exists
+	-set location to -1 = deleted
+		-do same for predecessor if exists
+
+
+
+//alternative
+-2 caches (one for always and one for adding new stuff)
+//swap line policy
+	-get is not in memory
+	-auxillory is full
+
+
+-write cache line to file
+	-delete file
+	-rewrite file from cache
+-read cache line from file
+	-write existing if any modifications
+
+	-if file is incomplete
+		-read previous file + this one
+		-otherwise read this one
+
+-update objects
+	-same as write
+-remove
+	-set removed object uid to -1
+	-update min and max uid values that each file has
+	-rewrite file with removed object
+	-only update other files when they are written otherwise
+	-keep the remove instruction in memory
+	
+
+
+
+

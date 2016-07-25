@@ -569,7 +569,7 @@ public class BigArrayList<E extends Serializable>
 	 * @return The list in sorted order
 	 * @throws IOException
 	 */
-	public static<T extends Comparable<? super T> & Serializable> BigArrayList<T> sort(BigArrayList<T> unsortedList, Comparator<? super T> comparator) throws IOException
+	public static<T extends Serializable> BigArrayList<T> sort(BigArrayList<T> unsortedList, Comparator<? super T> comparator) throws IOException
 	{
 		if(unsortedList.size() <= 1)
 		{
