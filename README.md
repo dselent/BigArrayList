@@ -30,7 +30,6 @@ All files written to disk are stored in one folder, which can be specified by th
 
 ## Code Example
 
-    `
     
     import com.dselent.bigarraylist.BigArrayList;
     
@@ -62,7 +61,6 @@ All files written to disk are stored in one folder, which can be specified by th
         bal.clearMemory();
       }
     }
-    `
 
 
 ## How to Use
