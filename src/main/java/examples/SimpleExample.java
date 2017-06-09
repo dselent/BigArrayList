@@ -1,7 +1,8 @@
+package examples;
+
 import java.io.IOException;
 
 import com.dselent.bigarraylist.BigArrayList;
-
 
 public class SimpleExample
 {
