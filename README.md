@@ -65,7 +65,7 @@ All files written to disk are stored in one folder, which can be specified by th
 
 ## How to Use
 
-Use BigArrayList as if it were a regular ArrayList.  There are more constructor options to specify the amount of data in memory and fewer functions.  Make sure to call "clearMemory()" when done using the object.  Download the javadocs in the doc folder for more information and the BigArrayList.jar file to conveniently add the library to existing projects.  [https://github.com/dselent/BigArrayList](https://github.com/dselent/BigArrayList)
+Use BigArrayList as if it were a regular ArrayList.  There are more constructor options to specify the amount of data in memory and fewer functions.  Make sure to call "clearMemory()" when done using the object.  Download the javadocs in the doc folder for more information and the BigArrayList.jar file to conveniently add the library to existing projects.
 
 ## Notes + Warnings
 Random operations are slow and should be avoided.
@@ -75,4 +75,4 @@ Some types of serialization will clear the contents on disk automatically when y
 You should treat storing any element retrieved from a BigArrayList as if it were a copy-by-value.  The reason for this is because the content in a BigArrayList can be serialized and deserialized during any operation.  Therefore, upon deserialization, a new object is created.  Any old references in the program are now referencing a different object than what is being stored in the BigArrayList.  If you retrieve an element from a BigArrayList and change it, make sure to save it back to the list.
 
 ## How to Build
-Import normally as a Gradle project.  The SimpleTest.java file can be run as a standard Java application to test the build.
+Import normally as a Gradle project which will handle all dependencies (current fast serialization library).  The SimpleTest.java file can be run as a standard Java application to test the build.
