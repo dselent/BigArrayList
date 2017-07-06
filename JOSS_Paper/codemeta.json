@@ -1,0 +1,15 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": ["Douglas Selent"],
+  "identifier": "",
+  "codeRepository": "https://github.com/dselent/BigArrayList",
+  "datePublished": "",
+  "dateModified": "2017-07-06",
+  "dateCreated": "2017-02-15",
+  "description": "BigArrayList: A Java API which Allows Programmers to Transparently Use Disk Space as Additional Memory",
+  "keywords": "BigArrayList, ArrayList",
+  "license": "GPL-3",
+  "title": "BigArrayList",
+  "version": "1.3"
+}
