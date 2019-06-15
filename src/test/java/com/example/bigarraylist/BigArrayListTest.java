@@ -1,14 +1,14 @@
-package test;
+package com.example.bigarraylist;
+
+import com.dselent.bigarraylist.BigArrayList;
+
+import junit.framework.TestCase;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import com.dselent.bigarraylist.BigArrayList;
-
-import junit.framework.TestCase;
 
 public class BigArrayListTest extends TestCase
 {

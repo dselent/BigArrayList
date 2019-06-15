@@ -22,7 +22,6 @@ package com.dselent.bigarraylist;
 import java.io.IOException;
 import java.io.Serializable;
 
-
 /**
  * Class that manages the mapping from files on disk to elements in memory for the BigArrayList class.
  * Uses an LRU policy at the cache block level to determine which cache block should be swapped out next.
@@ -353,10 +352,8 @@ class CacheMapping<E extends Serializable>
 		}
 		
 		//shift down
-		for(int i=shiftPosition; i<mostRecentlyUsedList.length-1; i++)
-		{
-			mostRecentlyUsedList[i] = mostRecentlyUsedList[i+1];
-		}
+		if (mostRecentlyUsedList.length - 1 - shiftPosition >= 0)
+			System.arraycopy(mostRecentlyUsedList, shiftPosition + 1, mostRecentlyUsedList, shiftPosition, mostRecentlyUsedList.length - 1 - shiftPosition);
 
 		mostRecentlyUsedList[newPosition] = blockNumber;
 

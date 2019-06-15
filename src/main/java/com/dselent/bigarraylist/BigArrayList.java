@@ -19,6 +19,8 @@
 
 package com.dselent.bigarraylist;
 
+import android.annotation.SuppressLint;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -27,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * A BigArrayList acts the same way a regular {@link java.util.ArrayList} would for data sizes that cannot fit in memory all at once.
+ * A BigArrayList acts the same way a regular {@link ArrayList} would for data sizes that cannot fit in memory all at once.
  * This class can be used just like an ArrayList, with all the file I/O managed automatically and internally.
  * <p>
  * The size and number of cache blocks to be stored in memory can be specified.
@@ -153,7 +155,7 @@ public class BigArrayList<E extends Serializable>
 		OBJECT,
 		MMAP_OBJECT,
 		FST_OBJECT,
-		MMAP_FST_OBJECT;
+		MMAP_FST_OBJECT
 	}
 
 	/**
@@ -555,6 +557,7 @@ public class BigArrayList<E extends Serializable>
 	 * @return The list in sorted order
 	 * @throws IOException
 	 */
+	@SuppressLint("NewApi")
 	public static<T extends Comparable<? super T> & Serializable> BigArrayList<T> sort(BigArrayList<T> unsortedList) throws IOException
 	{
 		return sort(unsortedList, Comparator.naturalOrder());
@@ -658,7 +661,7 @@ public class BigArrayList<E extends Serializable>
 			long firstElementEnd = -1;
 			long secondElementEnd = -1;
 			
-			long currentMergeElements = 0l;
+			long currentMergeElements = 0L;
 			long totalMergeElements = -1;
 			
 			if(i+blockIncrement < usedCacheBlocksLong)

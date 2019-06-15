@@ -19,14 +19,25 @@
 
 package com.dselent.bigarraylist;
 
-import java.io.*;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-
 import org.nustaq.serialization.FSTConfiguration;
 import org.nustaq.serialization.FSTObjectInput;
 import org.nustaq.serialization.FSTObjectOutput;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
+import java.io.Serializable;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 
 
 //FST
@@ -553,7 +564,7 @@ class FileAccessor<E extends Serializable>
 	 * Writes a cache block to disk using memory mapped files with object streams
 	 * <p>
 	 * Will not automatically delete files when the program ends.  Programmer must call {@link com.dselent.bigarraylist.BigArrayList#clearMemory}
-	 * 
+	 *
 	 * @param fileNumber The file number to write to
 	 * @param cacheSpot The block to write to disk
 	 * @param arrayList The BigArrayList
@@ -566,17 +577,17 @@ class FileAccessor<E extends Serializable>
 
 		if(!arrayList.getList(cacheSpot).isEmpty())
 		{
-			RandomAccessFile tempFile = new RandomAccessFile(filePath, "rw");	
-			
+			RandomAccessFile tempFile = new RandomAccessFile(filePath, "rw");
+
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			ObjectOutputStream objectOutputStream = new ObjectOutputStream(baos);
 			MappedByteBuffer tempByteBuffer;
-			
+
 			try
 			{
 				objectOutputStream.writeObject(arrayList.getList(cacheSpot));
 				objectOutputStream.flush();
-				
+
 				byte[] byteArray = baos.toByteArray();
 				tempByteBuffer = tempFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, byteArray.length);
 				tempByteBuffer.put(byteArray);
@@ -590,7 +601,7 @@ class FileAccessor<E extends Serializable>
 			finally
 			{
 				objectOutputStream.close();
-	
+
 				tempByteBuffer = null;
 				tempFile.close();
 				System.gc();
@@ -603,10 +614,10 @@ class FileAccessor<E extends Serializable>
 		}
 
 	}
-	
+
 	/**
 	 * Writes a cache block to disk using FST object output streams
-	 * 
+	 *
 	 * @param fileNumber The file number to write to
 	 * @param cacheSpot The block to write to disk
 	 * @param arrayList The BigArrayList
@@ -617,17 +628,17 @@ class FileAccessor<E extends Serializable>
 		String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
 
 		File tempFile = new File(filePath);
-		
+
 		if(!arrayList.getList(cacheSpot).isEmpty())
 		{
 			tempFile.deleteOnExit();
-		
+
 			FileOutputStream fileOutputStream = new FileOutputStream(filePath);
 			FSTObjectOutput fstObjectOutputStream = new FSTObjectOutput(fileOutputStream);
 
 			try
 			{
-				byte byteArray[] = fstConfiguration.asByteArray(arrayList.getList(cacheSpot));
+				byte[] byteArray = fstConfiguration.asByteArray(arrayList.getList(cacheSpot));
 				fstObjectOutputStream.write(byteArray);
 				fstObjectOutputStream.flush();
 			}
@@ -646,7 +657,7 @@ class FileAccessor<E extends Serializable>
 			tempFile.delete();
 		}
 	}
-	
+
 
 	/**
 	 * Writes a cache block to disk using memory mapped files with FST object output streams
@@ -669,7 +680,7 @@ class FileAccessor<E extends Serializable>
 			
 			try
 			{
-				byte byteArray[] = fstConfiguration.asByteArray(arrayList.getList(cacheSpot));
+				byte[] byteArray = fstConfiguration.asByteArray(arrayList.getList(cacheSpot));
 				tempByteBuffer = tempFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, byteArray.length);
 				tempByteBuffer.put(byteArray);
 				tempByteBuffer.force();
@@ -703,16 +714,13 @@ class FileAccessor<E extends Serializable>
 
 		File[] fileList = memoryFolder.listFiles();
 
-		for(int i=0; i<fileList.length; i++)
-		{
-			String path = fileList[i].getAbsolutePath();
+		for (File file : fileList) {
+			String path = file.getAbsolutePath();
 
-			if(path.startsWith(memoryFolder.getAbsolutePath() + File.separator + memoryInstance))
-			{
-				boolean deleted = fileList[i].delete();
+			if (path.startsWith(memoryFolder.getAbsolutePath() + File.separator + memoryInstance)) {
+				boolean deleted = file.delete();
 
-				if(!deleted)
-				{
+				if (!deleted) {
 					throw new IOException("Unable to delete file: " + path);
 				}
 			}
