@@ -1,2 +1,2 @@
 //include ':app'
-rootProject.name='BigArrayList'
+rootProject.name = 'BigArrayList'

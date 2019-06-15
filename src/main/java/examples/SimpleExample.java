@@ -4,18 +4,15 @@ import com.dselent.bigarraylist.BigArrayList;
 
 import java.io.IOException;
 
-public class SimpleExample
-{
-	public static void main(String[] args) throws IOException
-	{
+public class SimpleExample {
+	public static void main(String[] args) throws IOException {
 		//create a BigArrayList of Longs
 		//cache block size = 1 million
 		//cache blocks = 4
 		BigArrayList<Long> bal = new BigArrayList<Long>(1000000, 4);
 
 		//add 10 million elements
-		for(long i=0; i<10000000; i++)
-		{
+		for (long i = 0; i < 10000000; i++) {
 			bal.add(i);
 		}
 
