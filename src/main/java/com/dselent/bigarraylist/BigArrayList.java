@@ -21,12 +21,17 @@ package com.dselent.bigarraylist;
 
 import android.annotation.SuppressLint;
 
+import androidx.core.util.Consumer;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 /**
  * A BigArrayList acts the same way a regular {@link ArrayList} would for data sizes that cannot fit in memory all at
@@ -67,6 +72,7 @@ import java.util.List;
  * @param <E> Generic type
  * @author Douglas Selent
  */
+@SuppressLint("NewApi")
 public class BigArrayList<E extends Serializable> {
 	/**
 	 * The ArrayList of cache blocks. Each ArrayList corresponds to a cache block currently in memory
@@ -369,7 +375,19 @@ public class BigArrayList<E extends Serializable> {
 		liveObject = true;
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	/** TODO slow stream implementation */
+	public Stream<E> stream() {
+		AtomicInteger n = new AtomicInteger(0);
+		return Stream.generate(() -> get(n.getAndIncrement())).limit(this.size());
+//		return Arrays.stream(array);
+	}
+
+	/** TODO Or slow foreach implementation */
+	public void forEach(Consumer<? super E> action)
+	{
+		for (int i = 0; i < this.size(); i++)
+			action.accept(this.get(i));
+	}
 
 	/**
 	 * @return Returns the associated CacheMapping object
@@ -388,10 +406,7 @@ public class BigArrayList<E extends Serializable> {
 	/**
 	 * @return Returns the block size
 	 */
-	public int getBlockSize() {
-
-		return blockSize;
-	}
+	public int getBlockSize() { return blockSize; }
 
 	/**
 	 * @return Returns the number of used cache blocks based on the size of the list
