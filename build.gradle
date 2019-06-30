@@ -7,7 +7,7 @@ buildscript {
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0-beta04'
+        classpath 'com.android.tools.build:gradle:3.5.0-beta05'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -26,7 +26,7 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.0"
+
     defaultConfig {
 
         minSdkVersion 19
@@ -47,9 +47,9 @@ android {
     }
 }
 
-//configurations {
-//    extraLibs
-//}
+configurations {
+    extraLibs
+}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -58,7 +58,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
-    api group: 'de.ruedigermoeller', name: 'fst', version: '2.50'
-//    extraLibs group: 'de.ruedigermoeller', name: 'fst', version: '2.50'
-//    configurations.compile.extendsFrom(configurations.extraLibs)
+    api group: 'de.ruedigermoeller', name: 'fst', version: '2.57'
+    extraLibs group: 'de.ruedigermoeller', name: 'fst', version: '2.57'
+    configurations.compile.extendsFrom(configurations.extraLibs)
 }
