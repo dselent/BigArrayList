@@ -5,6 +5,7 @@ A BigArrayList is basically an ArrayList that can handle a much larger amount of
 1. Adding elements to the end of the list
 2. Getting and Setting elements
 3. Removing elements from the list
+4. Sorting the list
 
 ## BigArrayList Size
 
@@ -20,13 +21,6 @@ BigArrayList uses an LRU cache replacement policy to determine which block of da
 
 All files written to disk are stored in one folder, which can be specified by the programmer. Each BigArrayList instance has its own file prefix in order to distinguish one instance from another. This is done automatically by analyzing the files in the designated folder. The first file will always be named in the form of “<memoryInstanceNumber >_memory_0.jobj", where the variable “memoryInstanceNumber” uniquely defines the instance. A loop in the program starts with this variable set to zero and will continue to loop and increment the variable until a file name does not exist. This allows for multiple BigArrayList objects to be used in a single program as well as an array of BigArrayList objects.
 
-
-## Types of serialization
-
-1. Regular Object
-2. Memory-mapped
-3. [FST](https://github.com/RuedigerMoeller/fast-serialization/wiki/Serialization) 
-4. Memory-mapped + FST
 
 ## Code Example
 
@@ -52,7 +46,7 @@ All files written to disk are stored in one folder, which can be specified by th
         System.out.println(bal.get(5));
 			
         //set the element at index 5
-        bal.set(5, 100l);
+        bal.set(5, 100L);
 			
         //get the element at index 5
         System.out.println(bal.get(5));
@@ -75,4 +69,4 @@ Some types of serialization will clear the contents on disk automatically when y
 You should treat storing any element retrieved from a BigArrayList as if it were a copy-by-value.  The reason for this is because the content in a BigArrayList can be serialized and deserialized during any operation.  Therefore, upon deserialization, a new object is created.  Any old references in the program are now referencing a different object than what is being stored in the BigArrayList.  If you retrieve an element from a BigArrayList and change it, make sure to save it back to the list.
 
 ## How to Build
-Import normally as a Gradle project which will handle all dependencies (current fast serialization library).  The SimpleTest.java file can be run as a standard Java application to test the build.
+Import normally as a Gradle project.  The SimpleTest.java file can be run as a standard Java application to test the build.

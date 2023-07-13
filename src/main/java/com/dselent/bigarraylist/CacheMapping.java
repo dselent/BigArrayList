@@ -76,9 +76,9 @@ class CacheMapping<E extends Serializable>
 	 * @param blockSize Size of each cache block
 	 * @param cacheBlocks Number of cache blocks
 	 * @param theList Associated BigArrayList
-	 * @param memoryPath The file path to store contents on disk
+	 * @param folderPath The folder path to store contents on disk
 	 */
-	protected CacheMapping(BigArrayList<E> theList, int blockSize, int cacheBlocks, String memoryPath)
+	protected CacheMapping(BigArrayList<E> theList, int blockSize, int cacheBlocks, String folderPath)
 	{
 		cacheTableSpots = new int[cacheBlocks];
 		cacheTableFiles = new int[cacheBlocks];
@@ -94,7 +94,7 @@ class CacheMapping<E extends Serializable>
 		}
 		
 		bigArrayList = theList;
-		fileAccessor = new FileAccessor<E>(memoryPath);
+		fileAccessor = new FileAccessor<>(folderPath);
 	}
 	
 	/**
@@ -120,7 +120,7 @@ class CacheMapping<E extends Serializable>
 		}
 		
 		bigArrayList = theList;
-		fileAccessor = new FileAccessor<E>();
+		fileAccessor = new FileAccessor<>();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -401,26 +401,8 @@ class CacheMapping<E extends Serializable>
 		{
 			try
 			{				
-				if(bigArrayList.getIOType() == BigArrayList.IOTypes.OBJECT)
-				{
-					fileAccessor.writeToFileObject(fileNumber, blockIndex, bigArrayList);
-				}
-				else if(bigArrayList.getIOType() == BigArrayList.IOTypes.MMAP_OBJECT)
-				{
-					fileAccessor.writeToFileMMapObject(fileNumber, blockIndex, bigArrayList);
-				}
-				else if(bigArrayList.getIOType() == BigArrayList.IOTypes.FST_OBJECT)
-				{
-					fileAccessor.writeToFileFSTObject(fileNumber, blockIndex, bigArrayList);
-				}
-				else if(bigArrayList.getIOType() == BigArrayList.IOTypes.MMAP_FST_OBJECT)
-				{
-					fileAccessor.writeToFileMMapFSTObject(fileNumber, blockIndex, bigArrayList);
-				}
-				else
-				{
-					fileAccessor.writeToFileObject(fileNumber, blockIndex, bigArrayList);
-				}
+
+				fileAccessor.writeToFileObject(fileNumber, blockIndex, bigArrayList);
 				
 				setDirtyBit(blockIndex, false);
 			}
@@ -499,27 +481,7 @@ class CacheMapping<E extends Serializable>
 	{
 		try
 		{
-			if(bigArrayList.getIOType() == BigArrayList.IOTypes.OBJECT)
-			{
-				fileAccessor.readFromFileObject(fileNumber, cacheIndex, bigArrayList);
-			}
-			else if(bigArrayList.getIOType() == BigArrayList.IOTypes.MMAP_OBJECT)
-			{
-				fileAccessor.readFromFileMMapObject(fileNumber, cacheIndex, bigArrayList);
-			}
-			else if(bigArrayList.getIOType() == BigArrayList.IOTypes.FST_OBJECT)
-			{
-				fileAccessor.readFromFileFSTObject(fileNumber, cacheIndex, bigArrayList);
-			}
-			else if(bigArrayList.getIOType() == BigArrayList.IOTypes.MMAP_FST_OBJECT)
-			{
-				fileAccessor.readFromFileMMapFSTObject(fileNumber, cacheIndex, bigArrayList);
-			}
-			else
-			{
-				fileAccessor.readFromFileObject(fileNumber, cacheIndex, bigArrayList);
-			}
-			
+			fileAccessor.readFromFileObject(fileNumber, cacheIndex, bigArrayList);
 		}
 		catch(Exception e)
 		{

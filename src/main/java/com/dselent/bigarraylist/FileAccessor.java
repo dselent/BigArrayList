@@ -20,17 +20,7 @@
 package com.dselent.bigarraylist;
 
 import java.io.*;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-
-import org.nustaq.serialization.FSTConfiguration;
-import org.nustaq.serialization.FSTObjectInput;
-import org.nustaq.serialization.FSTObjectOutput;
-
-
-//FST
-//https://github.com/RuedigerMoeller/fast-serialization/wiki/Serialization
 
 /**
  * Class that reads and writes the contents of the BigArrayList to/from disk.
@@ -97,14 +87,9 @@ class FileAccessor<E extends Serializable>
 	 * Memory instance for this object
 	 */
 	private int memoryInstance;
-	
+
 	/**
-	 * FST configuration for using FST object serialization
-	 */
-	private static FSTConfiguration fstConfiguration;
-	
-	/**
-	 * Constructs a FileAccessor object with the default file path to store contents on disk
+	 * Constructs a FileAccessor object with the default folder path to store contents on disk
 	 */
 	public FileAccessor()
 	{
@@ -126,24 +111,19 @@ class FileAccessor<E extends Serializable>
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		
-		if(fstConfiguration == null)
-		{
-			fstConfiguration = FSTConfiguration.createDefaultConfiguration();
-		}
 
 	}
 
 	/**
-	 * Constructs a FileAccessor object with the specified file path to store contents on disk
+	 * Constructs a FileAccessor object with the specified folder path to store contents on disk
 	 * 
-	 * @param memoryPath The folder path to read and write to
+	 * @param folderPath The folder path to read and write to
 	 */
-	public FileAccessor(String memoryPath)
+	public FileAccessor(String folderPath)
 	{
-		this.memoryPath = memoryPath;
+		this.memoryPath = folderPath;
 		memoryExtension = DEFAULT_MEMORY_FILE_EXTENSION;
-		memoryFolder = new File(memoryPath);
+		memoryFolder = new File(folderPath);
 
 		try
 		{
@@ -159,11 +139,7 @@ class FileAccessor<E extends Serializable>
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		
-		if(fstConfiguration == null)
-		{
-			fstConfiguration = FSTConfiguration.createDefaultConfiguration();
-		}
+
 	}
 
 	/**
@@ -321,188 +297,7 @@ class FileAccessor<E extends Serializable>
 			arrayList.setList(cacheSpot, new ArrayList<E>());
 		}
 	}
-	
-	/**
-	 * Reads the contents of a cache block into memory using memory mapped files with object streams
-	 * Reads in the size (number of elements) as the first object
-	 * @param fileNumber The file to read from
-	 * @param cacheSpot The location in cache to read into (the ArrayList index)
-	 * @param arrayList The BigArrayList object
-	 * @throws IOException For I/O errors
-	 * @throws ClassNotFoundException If no such class exists
-	 */
-	//must clean up byte buffer
-	@SuppressWarnings("unchecked")
-	protected void readFromFileMMapObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException, ClassNotFoundException
-	{
-			String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
-			File file = new File(filePath);
-			
-			if(file.exists())
-			{
-				RandomAccessFile tempFile = new RandomAccessFile(filePath, "rw");
-				
-				long tempFileLength = tempFile.length();
-				int fileLength = -1;
-				
-				if(tempFile.length() > Integer.MAX_VALUE)
-				{
-					tempFile.close();
-					throw new IllegalArgumentException(tempFileLength + " cannot be cast to an int");
-				}
-				else
-				{
-					fileLength = (int) tempFileLength;
-					
-					MappedByteBuffer tempByteBuffer = tempFile.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, tempFile.length());
-					tempByteBuffer.load();
-				
-					byte[] byteArray = new byte[fileLength];
-					tempByteBuffer.get(byteArray);
-				
-					ByteArrayInputStream bais = new ByteArrayInputStream(byteArray);
-					ObjectInputStream objectInputStream = new ObjectInputStream(bais);
-				
-					try
-					{
-						arrayList.setList(cacheSpot, (ArrayList<E>)objectInputStream.readObject());
-					}
-					catch(IOException ioe)
-					{
-						throw ioe;
-					}
-					finally
-					{
-					
-						bais.close();
-						objectInputStream.close();
-				
-						tempByteBuffer.clear();
-						tempByteBuffer = null;
-						tempFile.close();
-						System.gc();
-					}
-				}
-			}
-			else
-			{
-				arrayList.setList(cacheSpot, new ArrayList<E>());
-			}
 
-	}
-	
-	/**
-	 * Reads a cache block from disk using FST object streams
-	 * 
-	 * @param fileNumber The file number to read from
-	 * @param cacheSpot The block to write to disk
-	 * @param arrayList The BigArrayList
-	 * @throws IOException For I/O errors
-	 * @throws ClassNotFoundException If no such class exists
-	 */
-	@SuppressWarnings("unchecked")
-	protected void readFromFileFSTObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException, ClassNotFoundException
-	{
-		String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
-		File file = new File(filePath);
-		
-		if(file.exists())
-		{
-			FileInputStream fileInputStream = new FileInputStream(filePath);
-			FSTObjectInput fstObjectInputStream = new FSTObjectInput(fileInputStream);
-			
-			try
-			{
-				arrayList.setList(cacheSpot, (ArrayList<E>)fstObjectInputStream.readObject());
-			}
-			catch(IOException ioe)
-			{
-				throw ioe;
-			}
-			catch (ClassNotFoundException ce)
-			{
-				throw ce;
-			}
-			finally
-			{
-				//need to close both streams, I think this is a java bug
-				//expected behavior = closing the fstObjectInputStream would also close the fileInputStream, but it does not
-				//Consequence = unable to delete files
-				fileInputStream.close();
-				fstObjectInputStream.close();
-			}
-		}
-		else
-		{
-			arrayList.setList(cacheSpot, new ArrayList<E>());
-		}
-
-	}
-	
-	/**
-	 * Reads the contents of a cache block into memory using memory mapped files with FST serialization
-	 * Reads in the size (number of elements) as the first object
-	 * 
-	 * @param fileNumber The file to read from
-	 * @param cacheSpot The location in cache to read into (the ArrayList index)
-	 * @param arrayList The BigArrayList object
-	 * @throws IOException For I/O errors
-	 * @throws ClassNotFoundException If no such class exists
-	 */
-	//must clean up byte buffer
-	@SuppressWarnings("unchecked")
-	protected void readFromFileMMapFSTObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException, ClassNotFoundException
-	{
-			String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
-			File file = new File(filePath);
-			
-			if(file.exists())
-			{
-				RandomAccessFile tempFile = new RandomAccessFile(filePath, "rw");
-				
-				long tempFileLength = tempFile.length();
-				int fileLength = -1;
-				
-				if(tempFile.length() > Integer.MAX_VALUE)
-				{
-					tempFile.close();
-					throw new IllegalArgumentException(tempFileLength + " cannot be cast to an int");
-				}
-				else
-				{
-					fileLength = (int) tempFileLength;
-					
-					MappedByteBuffer tempByteBuffer;
-					
-					try
-					{
-						tempByteBuffer = tempFile.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, tempFile.length());
-						tempByteBuffer.load();
-					
-						byte[] byteArray = new byte[fileLength];
-						tempByteBuffer.get(byteArray);
-						arrayList.setList(cacheSpot, (ArrayList<E>)fstConfiguration.asObject(byteArray));
-						
-						tempByteBuffer.clear();
-					}
-					catch(IOException ioe)
-					{
-						throw ioe;
-					}
-					finally
-					{			
-						
-						tempByteBuffer = null;
-						tempFile.close();
-						System.gc();
-					}
-				}
-			}
-			else
-			{
-				arrayList.setList(cacheSpot, new ArrayList<E>());
-			}
-	}
 
 	/**
 	 * Writes a cache block to disk using buffered I/O with standard object streams
@@ -547,150 +342,6 @@ class FileAccessor<E extends Serializable>
 		{
 			tempFile.delete();
 		}
-	}	
-	
-	/**
-	 * Writes a cache block to disk using memory mapped files with object streams
-	 * <p>
-	 * Will not automatically delete files when the program ends.  Programmer must call {@link com.dselent.bigarraylist.BigArrayList#clearMemory}
-	 * 
-	 * @param fileNumber The file number to write to
-	 * @param cacheSpot The block to write to disk
-	 * @param arrayList The BigArrayList
-	 * @throws IOException For I/O errors
-	 */
-	//must clean up byte buffer and suggest to garbage collect it or else the files cannot be deleted
-	protected void writeToFileMMapObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException
-	{
-		String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
-
-		if(!arrayList.getList(cacheSpot).isEmpty())
-		{
-			RandomAccessFile tempFile = new RandomAccessFile(filePath, "rw");	
-			
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			ObjectOutputStream objectOutputStream = new ObjectOutputStream(baos);
-			MappedByteBuffer tempByteBuffer;
-			
-			try
-			{
-				objectOutputStream.writeObject(arrayList.getList(cacheSpot));
-				objectOutputStream.flush();
-				
-				byte[] byteArray = baos.toByteArray();
-				tempByteBuffer = tempFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, byteArray.length);
-				tempByteBuffer.put(byteArray);
-				tempByteBuffer.force();
-				tempByteBuffer.clear();
-			}
-			catch(IOException ioe)
-			{
-				throw ioe;
-			}
-			finally
-			{
-				objectOutputStream.close();
-	
-				tempByteBuffer = null;
-				tempFile.close();
-				System.gc();
-			}
-		}
-		else
-		{
-			File tempFile = new File(filePath);
-			tempFile.delete();
-		}
-
-	}
-	
-	/**
-	 * Writes a cache block to disk using FST object output streams
-	 * 
-	 * @param fileNumber The file number to write to
-	 * @param cacheSpot The block to write to disk
-	 * @param arrayList The BigArrayList
-	 * @throws IOException For I/O errors
-	 */
-	protected void writeToFileFSTObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException
-	{
-		String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
-
-		File tempFile = new File(filePath);
-		
-		if(!arrayList.getList(cacheSpot).isEmpty())
-		{
-			tempFile.deleteOnExit();
-		
-			FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-			FSTObjectOutput fstObjectOutputStream = new FSTObjectOutput(fileOutputStream);
-
-			try
-			{
-				byte byteArray[] = fstConfiguration.asByteArray(arrayList.getList(cacheSpot));
-				fstObjectOutputStream.write(byteArray);
-				fstObjectOutputStream.flush();
-			}
-			catch(IOException ioe)
-			{
-				throw ioe;
-			}
-			finally
-			{
-				fileOutputStream.close();
-				fstObjectOutputStream.close();
-			}
-		}
-		else
-		{
-			tempFile.delete();
-		}
-	}
-	
-
-	/**
-	 * Writes a cache block to disk using memory mapped files with FST object output streams
-	 * <p>
-	 * Will not automatically delete files when the program ends.  Programmer must call {@link com.dselent.bigarraylist.BigArrayList#clearMemory}
-	 * 
-	 * @param fileNumber The file number to write to
-	 * @param cacheSpot The block to write to disk
-	 * @param arrayList The BigArrayList
-	 * @throws IOException For I/O errors
-	 */
-	protected void writeToFileMMapFSTObject(int fileNumber, int cacheSpot, BigArrayList<E> arrayList) throws IOException
-	{
-		String filePath = memoryPath + File.separator + memoryInstance + "_memory_" + fileNumber + memoryExtension;
-
-		if(!arrayList.getList(cacheSpot).isEmpty())
-		{
-			RandomAccessFile tempFile = new RandomAccessFile(filePath, "rw");
-			MappedByteBuffer tempByteBuffer;
-			
-			try
-			{
-				byte byteArray[] = fstConfiguration.asByteArray(arrayList.getList(cacheSpot));
-				tempByteBuffer = tempFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, byteArray.length);
-				tempByteBuffer.put(byteArray);
-				tempByteBuffer.force();
-				tempByteBuffer.clear();
-			}
-			catch(IOException ioe)
-			{
-				throw ioe;
-			}
-			finally
-			{
-				tempByteBuffer = null;
-				tempFile.close();
-				System.gc();
-			}
-		}
-		else
-		{
-			File tempFile = new File(filePath);
-			tempFile.delete();
-		}
 	}
 	
 	/**
@@ -707,7 +358,7 @@ class FileAccessor<E extends Serializable>
 		{
 			String path = fileList[i].getAbsolutePath();
 
-			if(path.startsWith(memoryFolder.getAbsolutePath() + File.separator + memoryInstance))
+			if(path.startsWith(memoryFolder.getAbsolutePath() + File.separator + memoryInstance + "_memory_"))
 			{
 				boolean deleted = fileList[i].delete();
 

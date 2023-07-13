@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * A BigArrayList acts the same way a regular {@link java.util.ArrayList} would for data sizes that cannot fit in memory all at once.
- * This class can be used just like an ArrayList, with all the file I/O managed automatically and internally.
+ * This class can be used like an ArrayList with limited functionality. All the file I/O operations are managed automatically and internally.
  * <p>
  * The size and number of cache blocks to be stored in memory can be specified.
  * <p>
@@ -53,14 +53,14 @@ import java.util.List;
  * }
  * 
  * //Set and get elements
- * arrayList.set(10, 100l);
+ * arrayList.set(10, 100L);
  * long getElement = arrayList.get(10);
  * 
  * //Clear data from disk when done
  * arrayList.clearMemory();
  * }
  * </pre>
- * <p>
+ * <br/>
  * @author Douglas Selent
  *
  * @param <E> Generic type
@@ -137,27 +137,9 @@ public class BigArrayList<E extends Serializable>
 	 * In this case the BigArrayList is considered a dead object even though it is not technically considered dead by Java.
 	 */
 	private boolean liveObject;
-	
-	/**
-	 * Type of serialization to use
-	 */
-	private IOTypes ioType;
-	
-	/**
-	 * Possible IO serialization types
-	 * 
-	 * @author Doug
-	 */
-	public enum IOTypes
-	{
-		OBJECT,
-		MMAP_OBJECT,
-		FST_OBJECT,
-		MMAP_FST_OBJECT;
-	}
 
 	/**
-	 * Constructs a BigArrayList with default values for the number of cache block, size of each cache block, and disk path.
+	 * Constructs a BigArrayList with default values for the number of cache blocks, size of each cache block, folder path, and serialization method.
 	 */
 	public BigArrayList()
 	{
@@ -177,24 +159,24 @@ public class BigArrayList<E extends Serializable>
 		}
 
 		wholeListSize = 0;
-		this.ioType = IOTypes.FST_OBJECT;
 		liveObject = true;
 	}
 
 	/**
-	 * Constructor that specifies where BigArrayList should write to disk.
+	 * Constructs a BigArrayList with the specified folder path to use for swapping contents to and from disk. <br>
+	 * Default values are used for the number of cache blocks, size of each cache block, and serialization method.
 	 * 
-	 * @param memoryPath The folder path to write to
+	 * @param folderPath The file path to write to
 	 */
-	public BigArrayList(String memoryPath)
+	public BigArrayList(String folderPath)
 	{
 		blockSize = DEFAULT_BLOCK_SIZE;
 		cacheBlocks = DEFAULT_CACHE_BLOCKS;
 		
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks, memoryPath);
+		softMapping = new SoftMapping<>();
+		cacheMapping = new CacheMapping<>(this, blockSize, cacheBlocks, folderPath);
 		
-		arrayLists = new ArrayList<List<E>>();
+		arrayLists = new ArrayList<>();
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
@@ -204,40 +186,14 @@ public class BigArrayList<E extends Serializable>
 		}
 
 		wholeListSize = 0;
-		this.ioType = IOTypes.FST_OBJECT;
 		liveObject = true;
 	}
 	
-	/**
-	 * Constructor that specifies where BigArrayList should write to disk.
-	 * 
-	 * @param memoryPath The folder path to write to
-	 * @param ioType The type of IO to use
-	 */
-	public BigArrayList(String memoryPath, IOTypes ioType)
-	{
-		blockSize = DEFAULT_BLOCK_SIZE;
-		cacheBlocks = DEFAULT_CACHE_BLOCKS;
-		
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks, memoryPath);
-		
-		arrayLists = new ArrayList<List<E>>();
 
-		for(int i=0; i<cacheBlocks; i++)
-		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(blockSize);
-			arrayLists.add(arrayList);
-		}
-
-		wholeListSize = 0;
-		this.ioType = ioType;
-		liveObject = true;
-	}
 
 	/**
-	 * Constructor that specifies the size and number of cache blocks.
+	 * Constructs a BigArrayList with the specified block size and number of cache blocks to use. <br/>
+	 * Default values are used for the folder path and serialization method.
 	 * 
 	 * @param blockSize Size of each cache block
 	 * @param cacheBlocks Number of cache blocks stored in memory at a given time
@@ -257,71 +213,31 @@ public class BigArrayList<E extends Serializable>
 		this.blockSize = blockSize;
 		this.cacheBlocks = cacheBlocks;
 		
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks);
+		softMapping = new SoftMapping<>();
+		cacheMapping = new CacheMapping<>(this, blockSize, cacheBlocks);
 		
-		arrayLists = new ArrayList<List<E>>();
+		arrayLists = new ArrayList<>();
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<>();
 			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
 		wholeListSize = 0;
-		this.ioType = IOTypes.FST_OBJECT;
-		liveObject = true;
-	}
-	
-	/**
-	 * Constructor that specifies the size and number of cache blocks.
-	 * 
-	 * @param blockSize Size of each cache block
-	 * @param cacheBlocks Number of cache blocks stored in memory at a given time
-	 * @param ioType The type of IO to use
-	 */
-	public BigArrayList(int blockSize, int cacheBlocks, IOTypes ioType)
-	{
-		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
-		{
-			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
-		}
-
-		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
-		{
-			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
-		}
-	
-		this.blockSize = blockSize;
-		this.cacheBlocks = cacheBlocks;
-		
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks);
-		
-		arrayLists = new ArrayList<List<E>>();
-
-		for(int i=0; i<cacheBlocks; i++)
-		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(blockSize);
-			arrayLists.add(arrayList);
-		}
-
-		wholeListSize = 0;
-		this.ioType = ioType;
 		liveObject = true;
 	}
 
 
 	/**
-	 * Constructor that specifies  the size and number of cache blocks as well as the folder path to write to.
+	 * Constructs a BigArrayList with the size and number of cache blocks and the folder path to write to.
 	 * 
 	 * @param blockSize cacheSize Size of each cache block
 	 * @param cacheBlocks Number of cache blocks stored in memory at a given time
-	 * @param memoryPath The folder path to write to
+	 * @param folderPath The folder path to write to
 	 */
-	public BigArrayList(int blockSize, int cacheBlocks, String memoryPath)
+	public BigArrayList(int blockSize, int cacheBlocks, String folderPath)
 	{
 		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
 		{
@@ -336,60 +252,19 @@ public class BigArrayList<E extends Serializable>
 		this.blockSize = blockSize;
 		this.cacheBlocks = cacheBlocks;
 		
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks, memoryPath);
+		softMapping = new SoftMapping<>();
+		cacheMapping = new CacheMapping<>(this, blockSize, cacheBlocks, folderPath);
 		
-		arrayLists = new ArrayList<List<E>>();
+		arrayLists = new ArrayList<>();
 
 		for(int i=0; i<cacheBlocks; i++)
 		{
-			ArrayList<E> arrayList = new ArrayList<E>();
+			ArrayList<E> arrayList = new ArrayList<>();
 			arrayList.ensureCapacity(blockSize);
 			arrayLists.add(arrayList);
 		}
 
 		wholeListSize = 0;
-		this.ioType = IOTypes.FST_OBJECT;
-		liveObject = true;
-	}
-	
-	/**
-	 * Constructor that specifies  the size and number of cache blocks as well as the folder path to write to.
-	 * 
-	 * @param blockSize cacheSize Size of each cache block
-	 * @param cacheBlocks Number of cache blocks stored in memory at a given time
-	 * @param memoryPath The folder path to write to
-	 * @param ioType The type of IO to use
-	 */
-	public BigArrayList(int blockSize, int cacheBlocks, String memoryPath, IOTypes ioType)
-	{
-		if(blockSize < MIN_CACHE_SIZE || blockSize > MAX_CACHE_SIZE)
-		{
-			throw new IllegalArgumentException("Cache size is " + blockSize + " but must be >= " + MIN_CACHE_SIZE + " and <= " + MAX_CACHE_SIZE);
-		}
-
-		if(cacheBlocks < MIN_CACHE_BLOCKS || cacheBlocks > MAX_CACHE_BLOCKS)
-		{
-			throw new IllegalArgumentException("Number of cache blocks is " + cacheBlocks +  " but must be >= " + MIN_CACHE_BLOCKS + " and <= " + MAX_CACHE_BLOCKS);
-		}
-	
-		this.blockSize = blockSize;
-		this.cacheBlocks = cacheBlocks;
-		
-		softMapping = new SoftMapping<E>();
-		cacheMapping = new CacheMapping<E>(this, blockSize, cacheBlocks, memoryPath);
-		
-		arrayLists = new ArrayList<List<E>>();
-
-		for(int i=0; i<cacheBlocks; i++)
-		{
-			ArrayList<E> arrayList = new ArrayList<E>();
-			arrayList.ensureCapacity(blockSize);
-			arrayLists.add(arrayList);
-		}
-
-		wholeListSize = 0;
-		this.ioType = ioType;
 		liveObject = true;
 	}
 
@@ -426,7 +301,7 @@ public class BigArrayList<E extends Serializable>
 	protected int getNumberOfUsedBlocks()
 	{
 		long blockSizeLong = blockSize;
-		long usedBlocks = (long) Math.ceil(this.size() * 1.0 / blockSizeLong * 1.0);
+		long usedBlocks = (long) Math.ceil(this.size() * 1.0 / blockSizeLong);
 		
 		//safe cast, I really doubt there will ever be over 2^31 - 1 blocks
 		return (int)usedBlocks;
@@ -441,7 +316,7 @@ public class BigArrayList<E extends Serializable>
 	protected int getNumberOfUsedBlocks(long index)
 	{
 		long blockSizeLong = blockSize;
-		long usedVirtualBlocks = (long) Math.ceil(index * 1.0 / blockSizeLong * 1.0);
+		long usedVirtualBlocks = (long) Math.ceil(index * 1.0 / blockSizeLong);
 		long usedRealBlocks = getNumberOfUsedBlocks();
 		long usedBlocks = Math.max(usedRealBlocks, usedVirtualBlocks);
 		
@@ -496,15 +371,6 @@ public class BigArrayList<E extends Serializable>
 	public long size()
 	{
 		return wholeListSize;
-	}
-	
-	/**
-	 * 
-	 * @return The IO serialization type
-	 */
-	public IOTypes getIOType()
-	{
-		return ioType;
 	}
 
 	/**
@@ -584,9 +450,8 @@ public class BigArrayList<E extends Serializable>
 			int cacheBlocks = unsortedList.getNumberOfBlocks();
 			int usedCacheBlocks = unsortedList.getNumberOfUsedBlocks();
 			String filePath = unsortedList.getFilePath();
-			IOTypes ioType = unsortedList.getIOType();
 			
-			BigArrayList<T> sortedList = new BigArrayList<T>(blockSize, cacheBlocks, filePath, ioType);
+			BigArrayList<T> sortedList = new BigArrayList<T>(blockSize, cacheBlocks, filePath);
 				
 			for(int i=usedCacheBlocks-1; i>=0; i--)
 			{
@@ -599,7 +464,7 @@ public class BigArrayList<E extends Serializable>
 		
 				cacheBlockSpot = unsortedCacheMapping.getCacheBlockSpot(i);
 				unsortedCacheMapping.setDirtyBit(cacheBlockSpot, true);
-				Collections.sort(unsortedList.getList(cacheBlockSpot), comparator);
+				unsortedList.getList(cacheBlockSpot).sort(comparator);
 			}	
 				
 			if(usedCacheBlocks > 1)
@@ -640,9 +505,8 @@ public class BigArrayList<E extends Serializable>
 		int cacheBlocks = unsortedList.getNumberOfBlocks();
 		long usedCacheBlocksLong = unsortedList.getNumberOfUsedBlocks();
 		String filePath = unsortedList.getFilePath();
-		IOTypes ioType = unsortedList.getIOType();
 		
-		BigArrayList<T> sortedList = new BigArrayList<T>(blockSize, cacheBlocks, filePath, ioType);
+		BigArrayList<T> sortedList = new BigArrayList<T>(blockSize, cacheBlocks, filePath);
 		
 		int blockIncrement = ipow(2, currentRun);
 		
@@ -1347,10 +1211,6 @@ public class BigArrayList<E extends Serializable>
 				isEqual = false;
 			}
 			else if(liveObject != otherBigArrayList.isLive())
-			{
-				isEqual = false;
-			}
-			else if(ioType != otherBigArrayList.ioType)
 			{
 				isEqual = false;
 			}

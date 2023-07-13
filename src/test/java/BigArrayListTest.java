@@ -1,5 +1,3 @@
-package test;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,49 +5,46 @@ import java.util.List;
 import java.util.Random;
 
 import com.dselent.bigarraylist.BigArrayList;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class BigArrayListTest extends TestCase
+public class BigArrayListTest
 {
 	private static final int NUMBER_OF_OPERATIONS = 4;
 	
-	private int testRuns;
-	private int minBlockSize;
-	private int maxBlockSize;
-	private int minCachBlocks;
-	private int maxCacheBlocks;
-	private int minActions;
-	private int maxActions;
+	private static int testRuns;
+	private static int minBlockSize;
+	private static int maxBlockSize;
+	private static int minCacheBlocks;
+	private static int maxCacheBlocks;
+	private static int minActions;
+	private static int maxActions;
 	
-	private Random random;
+	private static Random random;
 	private BigArrayList<Integer> bigArrayList;
-	
-	public BigArrayListTest(String testName)
+
+	@BeforeAll
+	static void setUp() throws Exception
 	{
-		super(testName);
-	}
-	
-	protected void setUp() throws Exception
-	{
-		super.setUp();
-		
 		//modify number of test runs as desired
 		testRuns = 10;
 		minBlockSize = 5;
 		maxBlockSize = 1000;
-		minCachBlocks = 2;
+		minCacheBlocks = 2;
 		maxCacheBlocks = 20;
 		minActions = 2;
 		maxActions = 100000;
 		
 		random = new Random(0);
 	}
-	
+
+	@AfterEach
 	protected void tearDown() throws Exception
 	{
-		super.tearDown();
-		
 		if(bigArrayList != null)
 		{
 			bigArrayList.clearMemory();
@@ -59,6 +54,7 @@ public class BigArrayListTest extends TestCase
 	/**
 	 * Monte-carlo test case.  Tests random operations on BigArrayLists with parameters randomized within ranges.
 	 */
+	@Test
 	public void testBigArrayList()
 	{
 		for(int i=0; i<testRuns; i++)
@@ -66,11 +62,11 @@ public class BigArrayListTest extends TestCase
 			System.out.println("Iteration " + i);
 			
 			int blockSize = random.nextInt(maxBlockSize-minBlockSize) + minBlockSize;
-			int cacheBlocks = random.nextInt(maxCacheBlocks-minCachBlocks) + minCachBlocks;
+			int cacheBlocks = random.nextInt(maxCacheBlocks- minCacheBlocks) + minCacheBlocks;
 			int actions = random.nextInt(maxActions-minActions) + minActions;
 
 			bigArrayList = new BigArrayList<Integer>(blockSize, cacheBlocks);
-			List<Integer> arrayList = new ArrayList<Integer>();
+			List<Integer> arrayList = new ArrayList<>();
 
 			for(int j=0; j<actions; j++)
 			{
@@ -93,7 +89,7 @@ public class BigArrayListTest extends TestCase
 					}
 					
 					String errorMessage = "(ADD) Sizes not equal: test run iteration = " + i + ", action number = " + j;
-					assertEquals(errorMessage, arrayList.size(), bigArrayList.size());					
+					assertEquals((long)arrayList.size(), bigArrayList.size(), errorMessage);
 				}
 				else if(action == 1)
 				{
@@ -108,10 +104,10 @@ public class BigArrayListTest extends TestCase
 					
 					String errorMessage = "(GET) Elements not equal: test run iteration = " + i + ", action number = " + j +
 							", ArrayList element = " + number1 + ", BigArrayList element = " + number2 + ", index = " + getIndex;
-					assertEquals(errorMessage, number1, number2);
+					assertEquals(number1, number2, errorMessage);
 					
 					String errorMessage2 = "(GET) Sizes not equal: test run iteration = " + i + ", action number = " + j;
-					assertEquals(errorMessage2, arrayList.size(), bigArrayList.size());		
+					assertEquals(arrayList.size(), bigArrayList.size(), errorMessage2);
 				}
 				else if(action == 2)
 				{
@@ -127,7 +123,7 @@ public class BigArrayListTest extends TestCase
 					
 					
 					String errorMessage2 = "(SET) Sizes not equal: test run iteration = " + i + ", action number = " + j + ", index = " + setIndex;
-					assertEquals(errorMessage2, arrayList.size(), bigArrayList.size());		
+					assertEquals(arrayList.size(), bigArrayList.size(), errorMessage2);
 				}
 				else if(action == 3)
 				{
@@ -142,10 +138,10 @@ public class BigArrayListTest extends TestCase
 
 					String errorMessage = "(REMOVE) Elements not equal: test run iteration = " + i + ", action number = " + j +
 							", ArrayList element = " + number1 + ", BigArrayList element = " + number2 + ", index = " + removeIndex;
-					assertEquals(errorMessage, number1, number2);
+					assertEquals(number1, number2, errorMessage);
 					
 					String errorMessage2 = "(REMOVE) Sizes not equal: test run iteration = " + i + ", action number = " + j;
-					assertEquals(errorMessage2, arrayList.size(), bigArrayList.size());
+					assertEquals(arrayList.size(), bigArrayList.size(), errorMessage2);
 					
 					if(j > actions/2 && arrayList.size() > 0)
 					{
@@ -157,10 +153,10 @@ public class BigArrayListTest extends TestCase
 
 						String errorMessage3 = "(REMOVE) Elements not equal: test run iteration = " + i + ", action number = " + j +
 								", ArrayList element = " + number1_2 + ", BigArrayList element = " + number2_2 + ", index = " + removeIndex;
-						assertEquals(errorMessage3, number1, number2);
+						assertEquals(number1, number2, errorMessage3);
 						
 						String errorMessage4 = "(REMOVE) Sizes not equal: test run iteration = " + i + ", action number = " + j;
-						assertEquals(errorMessage4, arrayList.size(), bigArrayList.size());
+						assertEquals(arrayList.size(), bigArrayList.size(), errorMessage4);
 					}
 				}
 					
@@ -186,7 +182,7 @@ public class BigArrayListTest extends TestCase
 
 				String errorMessage = "(Elements not equal: test run iteration = " + i +
 						", ArrayList element = " + number1 + ", BigArrayList element = " + number2 + ", index = " + j;
-				assertEquals(errorMessage, number1, number2);
+				assertEquals(number1, number2, errorMessage);
 			}
 			
 			
@@ -218,7 +214,7 @@ public class BigArrayListTest extends TestCase
 
 				String errorMessage = "(Elements not equal after sorting: test run iteration = " + i +
 						", ArrayList element = " + number1 + ", BigArrayList element = " + number2 + ", index = " + j;
-				assertEquals(errorMessage, number1, number2);
+				assertEquals(number1, number2, errorMessage);
 			}
 		}
 	}
